@@ -1,0 +1,18 @@
+# Local secrets — never commit
+config/mail.php
+config/database.php
+
+# Composer
+/vendor/
+composer.phar
+
+# User uploads (keep folder, ignore contents)
+/uploads/*
+!/uploads/.gitkeep
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
