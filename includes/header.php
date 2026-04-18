@@ -28,14 +28,17 @@ $flash = getFlash();
             <div class="collapse navbar-collapse" id="navbarNav">
                 <?php if ($currentUser): ?>
                     <ul class="navbar-nav me-auto">
-                        <?php if ($currentUser['role'] === 'user'): ?>
+                        <?php if ($currentUser['role'] === 'user'):
+                            $navIsVerified = $currentUser['status'] === 'verified';
+                            $lockClass = $navIsVerified ? '' : ' nav-feature-locked';
+                        ?>
                             <li class="nav-item"><a class="nav-link" href="/finalweb/dashboard.php">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="/finalweb/profile.php">Profile</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/finalweb/deposit.php">Deposit</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/finalweb/withdraw.php">Withdraw</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/finalweb/transfer.php">Transfer</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/finalweb/phone_card.php">Phone Card</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/finalweb/transactions.php">History</a></li>
+                            <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="/finalweb/deposit.php">Deposit</a></li>
+                            <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="/finalweb/withdraw.php">Withdraw</a></li>
+                            <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="/finalweb/transfer.php">Transfer</a></li>
+                            <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="/finalweb/phone_card.php">Phone Card</a></li>
+                            <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="/finalweb/transactions.php">History</a></li>
                         <?php elseif ($currentUser['role'] === 'admin'): ?>
                             <li class="nav-item"><a class="nav-link" href="/finalweb/admin/dashboard.php">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="/finalweb/admin/accounts.php">Accounts</a></li>

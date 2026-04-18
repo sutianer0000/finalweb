@@ -39,6 +39,25 @@ function requirePasswordChanged() {
     }
 }
 
+// Require that user is verified. If not, flash a message and redirect to dashboard.
+function requireVerified() {
+    requirePasswordChanged();
+    $user = getCurrentUser();
+    if ($user && $user['status'] !== 'verified') {
+        setFlash('warning', 'This feature is only available for verified accounts.');
+        redirect('/finalweb/dashboard.php');
+    }
+}
+
+// Require that current user is an admin
+function requireAdmin() {
+    requireLogin();
+    $user = getCurrentUser();
+    if (!$user || $user['role'] !== 'admin') {
+        redirect('/finalweb/login.php');
+    }
+}
+
 // Flash message helpers
 function setFlash($type, $message) {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];

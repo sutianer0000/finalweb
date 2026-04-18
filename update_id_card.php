@@ -1,0 +1,108 @@
+<?php
+require_once __DIR__ . '/includes/auth.php';
+requirePasswordChanged();
+
+$user = getCurrentUser();
+
+if ($user['status'] !== 'waiting_for_updates') {
+    setFlash('info', 'You do not need to re-upload your ID card.');
+    redirect('/finalweb/dashboard.php');
+}
+
+$errors = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $db = getDB();
+
+    if (!isset($_FILES['id_card_front']) || $_FILES['id_card_front']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Front photo of ID card is required.';
+    }
+    if (!isset($_FILES['id_card_back']) || $_FILES['id_card_back']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Back photo of ID card is required.';
+    }
+
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    foreach (['id_card_front', 'id_card_back'] as $field) {
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+            if (!in_array($_FILES[$field]['type'], $allowedTypes)) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be an image (JPEG, PNG, GIF, WEBP).';
+            }
+            if ($_FILES[$field]['size'] > 5 * 1024 * 1024) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 5MB.';
+            }
+        }
+    }
+
+    if (empty($errors)) {
+        $uploadDir = __DIR__ . '/uploads/id_cards/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $frontExt = pathinfo($_FILES['id_card_front']['name'], PATHINFO_EXTENSION);
+        $backExt  = pathinfo($_FILES['id_card_back']['name'], PATHINFO_EXTENSION);
+        $uniqueId = uniqid();
+        $frontFileName = 'front_' . $uniqueId . '.' . $frontExt;
+        $backFileName  = 'back_'  . $uniqueId . '.' . $backExt;
+
+        move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName);
+        move_uploaded_file($_FILES['id_card_back']['tmp_name'],  $uploadDir . $backFileName);
+
+        // Move status back to pending so admin sees it in the review queue again
+        $db->prepare("UPDATE users SET id_card_front = ?, id_card_back = ?, status = 'pending' WHERE id = ?")
+           ->execute([$frontFileName, $backFileName, $user['id']]);
+
+        setFlash('success', 'ID card photos re-uploaded. Your account is pending verification again.');
+        redirect('/finalweb/dashboard.php');
+    }
+}
+
+$pageTitle = 'Re-upload ID Card';
+require_once __DIR__ . '/includes/header.php';
+?>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="bi bi-card-image"></i> Re-upload ID Card</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    An admin found your previous ID card photos invalid. Please upload clearer photos of both the front and back of your ID card.
+                </div>
+
+                <?php if (!empty($errors)): ?>
+                    <div class="alert alert-danger">
+                        <?php foreach ($errors as $error): ?>
+                            <p class="mb-0"><?= sanitize($error) ?></p>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    <div class="mb-3">
+                        <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
+                        <div class="form-text">JPG, PNG, GIF or WEBP. Max 5 MB.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_card_back" class="form-label">ID Card - Back Photo <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
+                        <div class="form-text">JPG, PNG, GIF or WEBP. Max 5 MB.</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-upload"></i> Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -23,35 +23,60 @@ require_once __DIR__ . '/includes/header.php';
             </div>
         </div>
 
-        <?php if ($user['status'] !== 'verified'): ?>
+        <?php if ($user['status'] === 'pending'): ?>
             <div class="alert alert-warning">
                 <i class="bi bi-exclamation-triangle"></i>
-                Your account is not yet verified. Most features are only available for verified accounts.
+                Your account is <strong>pending verification</strong>. Most features are only available for verified accounts.
+            </div>
+        <?php elseif ($user['status'] === 'waiting_for_updates'): ?>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                An admin has requested additional information.
+                <a href="/finalweb/update_id_card.php" class="alert-link">Re-upload your ID card photos here</a>.
             </div>
         <?php endif; ?>
 
         <!-- Quick Actions -->
         <div class="row g-3">
             <?php
+            // [label, icon, url, color, always_available]
             $actions = [
-                ['Deposit', 'bi-plus-circle', 'deposit.php', 'success'],
-                ['Withdraw', 'bi-dash-circle', 'withdraw.php', 'danger'],
-                ['Transfer', 'bi-arrow-left-right', 'transfer.php', 'primary'],
-                ['Phone Card', 'bi-phone', 'phone_card.php', 'info'],
-                ['History', 'bi-clock-history', 'transactions.php', 'secondary'],
-                ['Profile', 'bi-person', 'profile.php', 'dark'],
+                ['Deposit',    'bi-plus-circle',      'deposit.php',      'success',   false],
+                ['Withdraw',   'bi-dash-circle',      'withdraw.php',     'danger',    false],
+                ['Transfer',   'bi-arrow-left-right', 'transfer.php',     'primary',   false],
+                ['Phone Card', 'bi-phone',            'phone_card.php',   'info',      false],
+                ['History',    'bi-clock-history',    'transactions.php', 'secondary', false],
+                ['Profile',    'bi-person',           'profile.php',      'dark',      true],
             ];
+            $isVerified = $user['status'] === 'verified';
             foreach ($actions as $action):
+                [$label, $icon, $url, $color, $alwaysAvailable] = $action;
+                $blocked = !$isVerified && !$alwaysAvailable;
             ?>
             <div class="col-6 col-md-4">
-                <a href="/finalweb/<?= $action[2] ?>" class="card text-decoration-none text-center p-3 h-100 
-                    <?= $user['status'] !== 'verified' && !in_array($action[2], ['profile.php']) ? 'opacity-75' : '' ?>">
-                    <i class="bi <?= $action[1] ?> text-<?= $action[3] ?>" style="font-size: 2rem;"></i>
-                    <p class="mt-2 mb-0 fw-semibold text-dark"><?= $action[0] ?></p>
-                </a>
+                <?php if ($blocked): ?>
+                    <a href="#" class="card text-decoration-none text-center p-3 h-100 opacity-75 feature-locked">
+                        <i class="bi <?= $icon ?> text-<?= $color ?>" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0 fw-semibold text-dark"><?= $label ?></p>
+                    </a>
+                <?php else: ?>
+                    <a href="/finalweb/<?= $url ?>" class="card text-decoration-none text-center p-3 h-100">
+                        <i class="bi <?= $icon ?> text-<?= $color ?>" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0 fw-semibold text-dark"><?= $label ?></p>
+                    </a>
+                <?php endif; ?>
             </div>
             <?php endforeach; ?>
         </div>
+
+        <script>
+        document.querySelectorAll('.feature-locked').forEach(el => {
+            el.addEventListener('click', function (e) {
+                e.preventDefault();
+                alert('This feature is only available for verified accounts.');
+            });
+        });
+        </script>
     </div>
 </div>
 

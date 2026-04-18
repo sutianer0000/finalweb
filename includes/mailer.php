@@ -64,3 +64,25 @@ function sendRegistrationEmail(string $toEmail, string $fullName, string $phone,
 
     return sendMail($toEmail, $fullName, $subject, $html, $alt);
 }
+function sendPasswordResetOtp(string $toEmail, string $fullName, string $otp): array
+{
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeOtp  = htmlspecialchars($otp,      ENT_QUOTES, 'UTF-8');
+
+    $subject = 'E-Wallet Password Reset - Your OTP Code';
+    $html = "
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px'>
+            <h2 style='color:#0d6efd;margin-top:0'>Password Reset Request</h2>
+            <p>Hi {$safeName}, use this code to reset your E-Wallet password:</p>
+            <div style='font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;background:#f8f9fa;padding:16px;border-radius:6px;margin:16px 0'>{$safeOtp}</div>
+            <p>This code expires in 10 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+            <p style='color:#6c757d;font-size:12px;margin-top:24px'>For your security, never share this code with anyone.</p>
+        </div>
+    ";
+    $alt = "Hi {$fullName},\n\n"
+         . "Your E-Wallet password reset code is: {$otp}\n\n"
+         . "This code expires in 10 minutes.\n"
+         . "If you did not request this, please ignore this email.";
+
+    return sendMail($toEmail, $fullName, $subject, $html, $alt);
+}
