@@ -1,0 +1,66 @@
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/mail.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+function sendMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
+{
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = SMTP_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = SMTP_USERNAME;
+        $mail->Password   = SMTP_PASSWORD;
+        $mail->SMTPSecure = SMTP_SECURE === 'ssl'
+            ? PHPMailer::ENCRYPTION_SMTPS
+            : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = SMTP_PORT;
+        $mail->CharSet    = 'UTF-8';
+
+        $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+        $mail->addAddress($toEmail, $toName);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $htmlBody;
+        $mail->AltBody = $altBody !== '' ? $altBody : strip_tags($htmlBody);
+
+        $mail->send();
+        return ['ok' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['ok' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
+    }
+}
+
+function sendRegistrationEmail(string $toEmail, string $fullName, string $phone, string $password): array
+{
+    $safeName  = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeEmail = htmlspecialchars($toEmail,  ENT_QUOTES, 'UTF-8');
+    $safePhone = htmlspecialchars($phone,    ENT_QUOTES, 'UTF-8');
+    $safePass  = htmlspecialchars($password, ENT_QUOTES, 'UTF-8');
+
+    $subject = 'E-Wallet Registration - Your Login Credentials';
+    $html = "
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px'>
+            <h2 style='color:#0d6efd;margin-top:0'>Welcome to E-Wallet, {$safeName}!</h2>
+            <p>Your account has been created successfully. Use either your email <strong>or</strong> phone number as your username.</p>
+            <table style='width:100%;border-collapse:collapse;margin:16px 0'>
+                <tr><td style='padding:8px;border:1px solid #ddd;background:#f8f9fa'><strong>Email</strong></td><td style='padding:8px;border:1px solid #ddd'>{$safeEmail}</td></tr>
+                <tr><td style='padding:8px;border:1px solid #ddd;background:#f8f9fa'><strong>Phone</strong></td><td style='padding:8px;border:1px solid #ddd'>{$safePhone}</td></tr>
+                <tr><td style='padding:8px;border:1px solid #ddd;background:#f8f9fa'><strong>Password</strong></td><td style='padding:8px;border:1px solid #ddd;font-family:monospace;font-size:16px'>{$safePass}</td></tr>
+            </table>
+            <p style='color:#b45309'><strong>Important:</strong> You will be asked to change this password on your first login. Your account is pending administrator verification.</p>
+            <p style='color:#6c757d;font-size:12px;margin-top:24px'>If you did not register for this account, please ignore this email.</p>
+        </div>
+    ";
+    $alt = "Welcome to E-Wallet, {$fullName}!\n\n"
+         . "Email:    {$toEmail}\n"
+         . "Phone:    {$phone}\n"
+         . "Password: {$password}\n\n"
+         . "You will be asked to change this password on first login.";
+
+    return sendMail($toEmail, $fullName, $subject, $html, $alt);
+}

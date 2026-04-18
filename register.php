@@ -1,0 +1,256 @@
+<?php
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/mailer.php';
+
+// If already logged in, redirect
+if (isLoggedIn()) {
+    redirect('/finalweb/dashboard.php');
+}
+
+$errors = [];
+$success = false;
+$credentials = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $db = getDB();
+
+    // Collect and sanitize inputs
+    $phone = trim($_POST['phone_number'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $fullName = trim($_POST['full_name'] ?? '');
+    $dob = trim($_POST['date_of_birth'] ?? '');
+    $address = trim($_POST['address'] ?? '');
+
+    // --- Validation ---
+    // Phone number
+    if (empty($phone)) {
+        $errors[] = 'Phone number is required.';
+    } elseif (!preg_match('/^[0-9]{9,15}$/', $phone)) {
+        $errors[] = 'Phone number must be 9-15 digits.';
+    } else {
+        $stmt = $db->prepare("SELECT id FROM users WHERE phone_number = ?");
+        $stmt->execute([$phone]);
+        if ($stmt->fetch()) {
+            $errors[] = 'This phone number is already registered.';
+        }
+    }
+
+    // Email
+    if (empty($email)) {
+        $errors[] = 'Email is required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Please enter a valid email address.';
+    } else {
+        $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            $errors[] = 'This email is already registered.';
+        }
+    }
+
+    // Full name
+    if (empty($fullName)) {
+        $errors[] = 'Full name is required.';
+    }
+
+    // Date of birth
+    if (empty($dob)) {
+        $errors[] = 'Date of birth is required.';
+    }
+
+    // Address
+    if (empty($address)) {
+        $errors[] = 'Address is required.';
+    }
+
+    // ID card front photo
+    if (!isset($_FILES['id_card_front']) || $_FILES['id_card_front']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Front photo of ID card is required.';
+    }
+
+    // ID card back photo
+    if (!isset($_FILES['id_card_back']) || $_FILES['id_card_back']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Back photo of ID card is required.';
+    }
+
+    // Validate image files
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    foreach (['id_card_front', 'id_card_back'] as $field) {
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+            if (!in_array($_FILES[$field]['type'], $allowedTypes)) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be an image file (JPEG, PNG, GIF, WEBP).';
+            }
+            if ($_FILES[$field]['size'] > 5 * 1024 * 1024) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 5MB.';
+            }
+        }
+    }
+
+    // --- If no errors, proceed ---
+    if (empty($errors)) {
+        // Upload ID card photos
+        $uploadDir = __DIR__ . '/uploads/id_cards/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $frontExt = pathinfo($_FILES['id_card_front']['name'], PATHINFO_EXTENSION);
+        $backExt = pathinfo($_FILES['id_card_back']['name'], PATHINFO_EXTENSION);
+        $uniqueId = uniqid();
+        $frontFileName = 'front_' . $uniqueId . '.' . $frontExt;
+        $backFileName = 'back_' . $uniqueId . '.' . $backExt;
+
+        move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName);
+        move_uploaded_file($_FILES['id_card_back']['tmp_name'], $uploadDir . $backFileName);
+
+        // Generate random 6-character password
+        $randomPassword = generateRandomString(6);
+        $hashedPassword = password_hash($randomPassword, PASSWORD_DEFAULT);
+
+        // Insert into database
+        $stmt = $db->prepare("
+            INSERT INTO users (phone_number, email, full_name, date_of_birth, address, password, id_card_front, id_card_back, status, first_login, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 1, 'user')
+        ");
+        $stmt->execute([
+            $phone, $email, $fullName, $dob, $address, $hashedPassword, $frontFileName, $backFileName
+        ]);
+
+        // Send credentials via PHPMailer
+        $mailResult = sendRegistrationEmail($email, $fullName, $phone, $randomPassword);
+
+        $success = true;
+        $credentials = [
+            'email' => $email,
+            'phone' => $phone,
+            'password' => $randomPassword,
+            'email_sent' => $mailResult['ok'],
+            'mail_error' => $mailResult['error'],
+        ];
+    }
+}
+
+$pageTitle = 'Register';
+require_once __DIR__ . '/includes/header.php';
+?>
+
+<div class="register-card">
+    <div class="card">
+        <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Create an Account</h4>
+        </div>
+        <div class="card-body p-4">
+
+            <?php if ($success && $credentials): ?>
+                <!-- Registration Success -->
+                <div class="text-center mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="text-success mt-2">Registration Successful!</h4>
+                    <p class="text-muted">Your account has been created. Please save your login credentials below.</p>
+                </div>
+
+                <?php if (!$credentials['email_sent']): ?>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> We could not send an email. Please save your credentials from below.
+                        <?php if (!empty($credentials['mail_error'])): ?>
+                            <div class="small text-muted mt-1">Mailer: <?= sanitize($credentials['mail_error']) ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-success">
+                        <i class="bi bi-envelope-check"></i> Login credentials have been sent to your email.
+                    </div>
+                <?php endif; ?>
+
+                <div class="credential-display mb-4">
+                    <p class="mb-2"><strong>Email (username):</strong></p>
+                    <p class="value"><?= sanitize($credentials['email']) ?></p>
+                    <hr>
+                    <p class="mb-2"><strong>Phone (username):</strong></p>
+                    <p class="value"><?= sanitize($credentials['phone']) ?></p>
+                    <hr>
+                    <p class="mb-2"><strong>Password:</strong></p>
+                    <p class="value"><?= sanitize($credentials['password']) ?></p>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Your account is pending verification by the administrator. You will need to change your password on first login.
+                </div>
+
+                <div class="text-center">
+                    <a href="/finalweb/login.php" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Go to Login
+                    </a>
+                </div>
+
+            <?php else: ?>
+                <!-- Registration Form -->
+                <?php if (!empty($errors)): ?>
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            <?php foreach ($errors as $error): ?>
+                                <li><?= sanitize($error) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone_number" name="phone_number" 
+                               placeholder="e.g. 0901234567" value="<?= sanitize($_POST['phone_number'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               placeholder="e.g. user@example.com" value="<?= sanitize($_POST['email'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                               placeholder="e.g. Nguyen Van A" value="<?= sanitize($_POST['full_name'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                               value="<?= sanitize($_POST['date_of_birth'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="address" name="address" rows="2" 
+                                  placeholder="Enter your full address" required><?= sanitize($_POST['address'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
+                        <div class="form-text">Upload a clear photo of the front of your identity card.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_card_back" class="form-label">ID Card - Back Photo <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
+                        <div class="form-text">Upload a clear photo of the back of your identity card.</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-person-plus"></i> Register
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>Already have an account? <a href="/finalweb/login.php">Login here</a></p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
