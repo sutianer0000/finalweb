@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
+require_once __DIR__ . '/includes/lang.php';
 
 // If already logged in, redirect
 if (isLoggedIn()) {
@@ -137,31 +138,38 @@ require_once __DIR__ . '/includes/header.php';
 <div class="register-card">
     <div class="card">
         <div class="card-header bg-primary text-white text-center">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> Create an Account</h4>
+            <h4 class="mb-0"><i class="bi bi-person-plus"></i> <?= __("create_account") ?></h4>
         </div>
         <div class="card-body p-4">
+
+            <!-- Language Switcher -->
+            <div class="text-end mb-3">
+                <a href="?lang=vi" class="btn btn-sm <?= $lang === 'vi' ? 'btn-primary' : 'btn-outline-primary' ?>">🇻🇳 VI</a>
+                <a href="?lang=en" class="btn btn-sm <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?>">🇬🇧 EN</a>
+            </div>
 
             <?php if ($success && $credentials): ?>
                 <!-- Registration Success -->
                 <div class="text-center mb-4">
                     <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                    <h4 class="text-success mt-2">Registration Successful!</h4>
-                    <p class="text-muted">Your account has been created. Please save your login credentials below.</p>
+                    <h4 class="text-success mt-2"><?= __("registration_successful") ?></h4>
+                    <p class="text-muted"><?= __("please_save_credentials") ?></p>
                 </div>
 
                 <?php if (!$credentials['email_sent']): ?>
                     <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i> We could not send an email. Please save your credentials from below.
+                        <i class="bi bi-exclamation-triangle"></i> <?= __("could_not_send_email") ?>
                         <?php if (!empty($credentials['mail_error'])): ?>
                             <div class="small text-muted mt-1">Mailer: <?= sanitize($credentials['mail_error']) ?></div>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="alert alert-success">
-                        <i class="bi bi-envelope-check"></i> Login credentials have been sent to your email.
+                        <i class="bi bi-envelope-check"></i> <?= __("email_sent_success") ?>
                     </div>
                 <?php endif; ?>
 
+                <!-- Credential display giữ nguyên -->
                 <div class="credential-display mb-4">
                     <p class="mb-2"><strong>Email (username):</strong></p>
                     <p class="value"><?= sanitize($credentials['email']) ?></p>
@@ -174,12 +182,12 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Your account is pending verification by the administrator. You will need to change your password on first login.
+                    <i class="bi bi-info-circle"></i> <?= __("account_pending") ?>
                 </div>
 
                 <div class="text-center">
                     <a href="/finalweb/login.php" class="btn btn-primary btn-lg">
-                        <i class="bi bi-box-arrow-in-right"></i> Go to Login
+                        <i class="bi bi-box-arrow-in-right"></i> <?= __("go_to_login") ?>
                     </a>
                 </div>
 
@@ -197,56 +205,59 @@ require_once __DIR__ . '/includes/header.php';
 
                 <form method="POST" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
-                        <label for="phone_number" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <label for="phone_number" class="form-label"><?= __("phone_number") ?> <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="phone_number" name="phone_number" 
-                               placeholder="e.g. 0901234567" value="<?= sanitize($_POST['phone_number'] ?? '') ?>" required>
+                               placeholder="<?= __("phone_placeholder") ?>" 
+                               value="<?= sanitize($_POST['phone_number'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <label for="email" class="form-label"><?= __("email_address") ?> <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="email" name="email" 
-                               placeholder="e.g. user@example.com" value="<?= sanitize($_POST['email'] ?? '') ?>" required>
+                               placeholder="<?= __("email_placeholder") ?>" 
+                               value="<?= sanitize($_POST['email'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <label for="full_name" class="form-label"><?= __("full_name") ?> <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="full_name" name="full_name" 
-                               placeholder="e.g. Nguyen Van A" value="<?= sanitize($_POST['full_name'] ?? '') ?>" required>
+                               placeholder="<?= __("full_name_placeholder") ?>" 
+                               value="<?= sanitize($_POST['full_name'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="date_of_birth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <label for="date_of_birth" class="form-label"><?= __("date_of_birth") ?> <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
                                value="<?= sanitize($_POST['date_of_birth'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <label for="address" class="form-label"><?= __("address") ?> <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="address" name="address" rows="2" 
-                                  placeholder="Enter your full address" required><?= sanitize($_POST['address'] ?? '') ?></textarea>
+                                  placeholder="<?= __("address_placeholder") ?>" required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
+                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
-                        <div class="form-text">Upload a clear photo of the front of your identity card.</div>
+                        <div class="form-text"><?= __("front_help") ?></div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_card_back" class="form-label">ID Card - Back Photo <span class="text-danger">*</span></label>
+                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
-                        <div class="form-text">Upload a clear photo of the back of your identity card.</div>
+                        <div class="form-text"><?= __("back_help") ?></div>
                     </div>
 
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-person-plus"></i> Register
+                            <i class="bi bi-person-plus"></i> <?= __("register") ?>
                         </button>
                     </div>
                 </form>
 
                 <div class="text-center mt-3">
-                    <p>Already have an account? <a href="/finalweb/login.php">Login here</a></p>
+                    <p><?= __("already_have_account") ?> <a href="/finalweb/login.php"><?= __("login_here") ?></a></p>
                 </div>
             <?php endif; ?>
         </div>
