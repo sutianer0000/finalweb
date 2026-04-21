@@ -1,11 +1,6 @@
--- =====================================================
--- E-WALLET DATABASE - 503073 Web Programming
--- Import this file directly into phpMyAdmin
--- =====================================================
 
-DROP DATABASE IF EXISTS ewallet;
-CREATE DATABASE ewallet CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE ewallet;
+
+USE railway;
 
 -- =====================================================
 -- USERS TABLE

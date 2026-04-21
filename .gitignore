@@ -1,14 +1,18 @@
-# Local secrets — never commit
-config/mail.php
-config/database.php
+# Local-only config (contains real credentials for XAMPP dev)
+config/local.php
 
-# Composer
+# Composer dependencies — installed by Railway / composer install
 /vendor/
 composer.phar
 
 # User uploads (keep folder, ignore contents)
 /uploads/*
 !/uploads/.gitkeep
+
+# Environment files
+.env
+.env.*
+!.env.example
 
 # OS / editor junk
 .DS_Store
