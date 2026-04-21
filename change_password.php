@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Keep user logged in — session already holds user_id, nothing to reset.
         setFlash('success', 'Password changed successfully.');
-        redirect('/finalweb/dashboard.php');
+        redirect(BASE_URL . '/dashboard.php');
     }
 }
 
@@ -87,7 +87,7 @@ require_once __DIR__ . '/includes/header.php';
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-lg"></i> Update Password
                         </button>
-                        <a href="/finalweb/dashboard.php" class="btn btn-outline-secondary">
+                        <a href="<?= BASE_URL ?>/dashboard.php" class="btn btn-outline-secondary">
                             Cancel
                         </a>
                     </div>

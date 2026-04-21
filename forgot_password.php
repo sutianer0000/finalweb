@@ -4,13 +4,13 @@ require_once __DIR__ . '/includes/mailer.php';
 
 // Logged-in users don't need this page
 if (isLoggedIn()) {
-    redirect('/finalweb/dashboard.php');
+    redirect(BASE_URL . '/dashboard.php');
 }
 
 // Allow user to manually restart the flow with ?restart=1
 if (isset($_GET['restart'])) {
     unset($_SESSION['forgot']);
-    redirect('/finalweb/forgot_password.php');
+    redirect(BASE_URL . '/forgot_password.php');
 }
 
 $db = getDB();
@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'reset')
 
             unset($_SESSION['forgot']);
             setFlash('success', 'Password reset successfully. Please log in with your new password.');
-            redirect('/finalweb/login.php');
+            redirect(BASE_URL . '/login.php');
         } else {
             $stage = 'reset';
         }
@@ -207,7 +207,7 @@ require_once __DIR__ . '/includes/header.php';
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-circle"></i> Verify Code
                         </button>
-                        <a href="/finalweb/forgot_password.php?restart=1" class="btn btn-link btn-sm">
+                        <a href="<?= BASE_URL ?>/forgot_password.php?restart=1" class="btn btn-link btn-sm">
                             Didn't get the code? Start over
                         </a>
                     </div>
@@ -236,7 +236,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php endif; ?>
 
             <div class="text-center mt-3">
-                <a href="/finalweb/login.php"><i class="bi bi-arrow-left"></i> Back to Login</a>
+                <a href="<?= BASE_URL ?>/login.php"><i class="bi bi-arrow-left"></i> Back to Login</a>
             </div>
         </div>
     </div>

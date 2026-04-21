@@ -20,7 +20,7 @@ require_once __DIR__ . '/includes/header.php';
     <div class="col-md-10 col-lg-8 mx-auto">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="mb-0"><i class="bi bi-person-circle"></i> Personal Information</h3>
-            <a href="/finalweb/dashboard.php" class="btn btn-outline-secondary btn-sm">
+            <a href="<?= BASE_URL ?>/dashboard.php" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left"></i> Back to Dashboard
             </a>
         </div>
@@ -52,7 +52,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i>
                 An admin has requested updates to your information.
-                <a href="/finalweb/update_id_card.php" class="alert-link">Re-upload your ID card photos here</a>.
+                <a href="<?= BASE_URL ?>/update_id_card.php" class="alert-link">Re-upload your ID card photos here</a>.
             </div>
         <?php elseif ($user['status'] === 'disabled'): ?>
             <div class="alert alert-danger">
@@ -130,8 +130,8 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Front</label>
                             <?php if (!empty($user['id_card_front'])): ?>
-                                <a href="/finalweb/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>" target="_blank">
-                                    <img src="/finalweb/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>"
+                                <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>" target="_blank">
+                                    <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>"
                                          alt="ID Card Front"
                                          class="img-fluid rounded border">
                                 </a>
@@ -142,8 +142,8 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Back</label>
                             <?php if (!empty($user['id_card_back'])): ?>
-                                <a href="/finalweb/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>" target="_blank">
-                                    <img src="/finalweb/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>"
+                                <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>" target="_blank">
+                                    <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>"
                                          alt="ID Card Back"
                                          class="img-fluid rounded border">
                                 </a>
@@ -160,10 +160,10 @@ require_once __DIR__ . '/includes/header.php';
 
         <!-- Quick Actions -->
         <div class="d-flex gap-2 flex-wrap">
-            <a href="/finalweb/change_password.php" class="btn btn-outline-primary">
+            <a href="<?= BASE_URL ?>/change_password.php" class="btn btn-outline-primary">
                 <i class="bi bi-key"></i> Change Password
             </a>
-            <a href="/finalweb/transactions.php" class="btn btn-outline-secondary">
+            <a href="<?= BASE_URL ?>/transactions.php" class="btn btn-outline-secondary">
                 <i class="bi bi-clock-history"></i> Transaction History
             </a>
         </div>

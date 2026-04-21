@@ -2,6 +2,13 @@
 session_start();
 require_once __DIR__ . '/../config/database.php';
 
+// Base URL prefix — empty on Railway (app at /), "/finalweb" for local XAMPP.
+// Set via BASE_URL env var (config/local.php for local, Railway dashboard for prod).
+if (!defined('BASE_URL')) {
+    $__baseUrl = getenv('BASE_URL');
+    define('BASE_URL', $__baseUrl !== false ? $__baseUrl : '');
+}
+
 // Check if user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
@@ -25,7 +32,7 @@ function redirect($url) {
 // Require login — redirects to login page if not authenticated
 function requireLogin() {
     if (!isLoggedIn()) {
-        redirect('/finalweb/login.php');
+        redirect(BASE_URL . '/login.php');
     }
 }
 
@@ -35,7 +42,7 @@ function requirePasswordChanged() {
     requireLogin();
     $user = getCurrentUser();
     if ($user && $user['first_login'] == 1) {
-        redirect('/finalweb/first_login_password.php');
+        redirect(BASE_URL . '/first_login_password.php');
     }
 }
 
@@ -45,7 +52,7 @@ function requireVerified() {
     $user = getCurrentUser();
     if ($user && $user['status'] !== 'verified') {
         setFlash('warning', 'This feature is only available for verified accounts.');
-        redirect('/finalweb/dashboard.php');
+        redirect(BASE_URL . '/dashboard.php');
     }
 }
 
@@ -54,7 +61,7 @@ function requireAdmin() {
     requireLogin();
     $user = getCurrentUser();
     if (!$user || $user['role'] !== 'admin') {
-        redirect('/finalweb/login.php');
+        redirect(BASE_URL . '/login.php');
     }
 }
 

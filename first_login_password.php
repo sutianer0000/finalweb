@@ -6,7 +6,7 @@ $user = getCurrentUser();
 
 // If not first login, redirect to dashboard
 if ($user['first_login'] != 1) {
-    redirect('/finalweb/dashboard.php');
+    redirect(BASE_URL . '/dashboard.php');
 }
 
 $errors = [];
@@ -36,9 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Redirect based on role
         if ($user['role'] === 'admin') {
-            redirect('/finalweb/admin/dashboard.php');
+            redirect(BASE_URL . '/admin/dashboard.php');
         } else {
-            redirect('/finalweb/dashboard.php');
+            redirect(BASE_URL . '/dashboard.php');
         }
     }
 }
@@ -56,7 +56,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i>
                 This is your first login. You must change your password before you can use the system.
-                If you don't want to change your password now, you can <a href="/finalweb/logout.php">log out</a>.
+                If you don't want to change your password now, you can <a href="<?= BASE_URL ?>/logout.php">log out</a>.
             </div>
 
             <?php if (!empty($errors)): ?>
@@ -86,7 +86,7 @@ require_once __DIR__ . '/includes/header.php';
                     <button type="submit" class="btn btn-warning btn-lg">
                         <i class="bi bi-check-lg"></i> Change Password
                     </button>
-                    <a href="/finalweb/logout.php" class="btn btn-outline-secondary">
+                    <a href="<?= BASE_URL ?>/logout.php" class="btn btn-outline-secondary">
                         <i class="bi bi-box-arrow-right"></i> Log Out Instead
                     </a>
                 </div>

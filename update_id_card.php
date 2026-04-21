@@ -6,7 +6,7 @@ $user = getCurrentUser();
 
 if ($user['status'] !== 'waiting_for_updates') {
     setFlash('info', 'You do not need to re-upload your ID card.');
-    redirect('/finalweb/dashboard.php');
+    redirect(BASE_URL . '/dashboard.php');
 }
 
 $errors = [];
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            ->execute([$frontFileName, $backFileName, $user['id']]);
 
         setFlash('success', 'ID card photos re-uploaded. Your account is pending verification again.');
-        redirect('/finalweb/dashboard.php');
+        redirect(BASE_URL . '/dashboard.php');
     }
 }
 

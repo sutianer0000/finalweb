@@ -3,6 +3,9 @@
 // config/local.php is gitignored — never commit actual credentials.
 // This file is only read during local XAMPP dev; on Railway, env vars are set in the dashboard.
 
+// --- URL base path for XAMPP (app lives at http://localhost/finalweb/) ---
+putenv('BASE_URL=/finalweb');
+
 // --- Local MySQL ---
 putenv('DB_HOST=localhost');
 putenv('DB_PORT=3306');

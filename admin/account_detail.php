@@ -7,7 +7,7 @@ $db = getDB();
 $userId = (int)($_GET['id'] ?? 0);
 if ($userId <= 0) {
     setFlash('error', 'Invalid account ID.');
-    redirect('/finalweb/admin/accounts.php');
+    redirect(BASE_URL . '/admin/accounts.php');
 }
 
 // Handle action POST
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$target || $target['role'] !== 'user') {
         setFlash('error', 'Account not found.');
-        redirect('/finalweb/admin/accounts.php');
+        redirect(BASE_URL . '/admin/accounts.php');
     }
 
     if ($action === 'verify') {
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('error', 'Unknown action.');
     }
 
-    redirect('/finalweb/admin/account_detail.php?id=' . $userId);
+    redirect(BASE_URL . '/admin/account_detail.php?id=' . $userId);
 }
 
 // Load full account info for display
@@ -47,7 +47,7 @@ $account = $stmt->fetch();
 
 if (!$account) {
     setFlash('error', 'Account not found.');
-    redirect('/finalweb/admin/accounts.php');
+    redirect(BASE_URL . '/admin/accounts.php');
 }
 
 $statusLabels = [
@@ -64,7 +64,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0"><i class="bi bi-person-vcard"></i> Account Details</h3>
-    <a href="/finalweb/admin/accounts.php?status=<?= sanitize($account['status']) ?>" class="btn btn-outline-secondary btn-sm">
+    <a href="<?= BASE_URL ?>/admin/accounts.php?status=<?= sanitize($account['status']) ?>" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Back
     </a>
 </div>
@@ -129,8 +129,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="mb-3">
                     <label class="text-muted small mb-1">Front</label>
                     <?php if (!empty($account['id_card_front'])): ?>
-                        <a href="/finalweb/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>" target="_blank">
-                            <img src="/finalweb/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>"
+                        <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>" target="_blank">
+                            <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>"
                                  alt="ID Front" class="img-fluid rounded border">
                         </a>
                     <?php else: ?>
@@ -140,8 +140,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <div>
                     <label class="text-muted small mb-1">Back</label>
                     <?php if (!empty($account['id_card_back'])): ?>
-                        <a href="/finalweb/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>" target="_blank">
-                            <img src="/finalweb/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>"
+                        <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>" target="_blank">
+                            <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>"
                                  alt="ID Back" class="img-fluid rounded border">
                         </a>
                     <?php else: ?>

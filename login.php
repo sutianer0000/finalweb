@@ -5,12 +5,12 @@ require_once __DIR__ . '/includes/auth.php';
 if (isLoggedIn()) {
     $user = getCurrentUser();
     if ($user['role'] === 'admin') {
-        redirect('/finalweb/admin/dashboard.php');
+        redirect(BASE_URL . '/admin/dashboard.php');
     }
     if ($user['first_login'] == 1) {
-        redirect('/finalweb/first_login_password.php');
+        redirect(BASE_URL . '/first_login_password.php');
     }
-    redirect('/finalweb/dashboard.php');
+    redirect(BASE_URL . '/dashboard.php');
 }
 
 $errors = [];
@@ -64,11 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Redirect based on role and first_login
                     if ($user['role'] === 'admin') {
-                        redirect('/finalweb/admin/dashboard.php');
+                        redirect(BASE_URL . '/admin/dashboard.php');
                     } elseif ($user['first_login'] == 1) {
-                        redirect('/finalweb/first_login_password.php');
+                        redirect(BASE_URL . '/first_login_password.php');
                     } else {
-                        redirect('/finalweb/dashboard.php');
+                        redirect(BASE_URL . '/dashboard.php');
                     }
                 } else {
                     // Wrong password — only apply lock logic for non-admin
@@ -149,10 +149,10 @@ require_once __DIR__ . '/includes/header.php';
             </form>
 
             <div class="text-center mt-3">
-                <a href="/finalweb/forgot_password.php">Forgot your password?</a>
+                <a href="<?= BASE_URL ?>/forgot_password.php">Forgot your password?</a>
             </div>
             <div class="text-center mt-2">
-                <p>Don't have an account? <a href="/finalweb/register.php">Register here</a></p>
+                <p>Don't have an account? <a href="<?= BASE_URL ?>/register.php">Register here</a></p>
             </div>
         </div>
     </div>

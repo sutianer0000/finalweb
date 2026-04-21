@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/mailer.php';
 
 // If already logged in, redirect
 if (isLoggedIn()) {
-    redirect('/finalweb/dashboard.php');
+    redirect(BASE_URL . '/dashboard.php');
 }
 
 $errors = [];
@@ -178,7 +178,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="text-center">
-                    <a href="/finalweb/login.php" class="btn btn-primary btn-lg">
+                    <a href="<?= BASE_URL ?>/login.php" class="btn btn-primary btn-lg">
                         <i class="bi bi-box-arrow-in-right"></i> Go to Login
                     </a>
                 </div>
@@ -246,7 +246,7 @@ require_once __DIR__ . '/includes/header.php';
                 </form>
 
                 <div class="text-center mt-3">
-                    <p>Already have an account? <a href="/finalweb/login.php">Login here</a></p>
+                    <p>Already have an account? <a href="<?= BASE_URL ?>/login.php">Login here</a></p>
                 </div>
             <?php endif; ?>
         </div>

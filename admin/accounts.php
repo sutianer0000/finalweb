@@ -32,7 +32,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0"><i class="bi bi-people"></i> Accounts</h3>
-    <a href="/finalweb/admin/dashboard.php" class="btn btn-outline-secondary btn-sm">
+    <a href="<?= BASE_URL ?>/admin/dashboard.php" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Back to Dashboard
     </a>
 </div>
@@ -44,7 +44,7 @@ require_once __DIR__ . '/../includes/header.php';
         $active = $statusFilter === $s ? 'active' : '';
     ?>
         <li class="nav-item">
-            <a class="nav-link <?= $active ?>" href="/finalweb/admin/accounts.php?status=<?= $s ?>">
+            <a class="nav-link <?= $active ?>" href="<?= BASE_URL ?>/admin/accounts.php?status=<?= $s ?>">
                 <?= $info['label'] ?>
             </a>
         </li>
@@ -81,7 +81,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <td><span class="badge bg-<?= $info['color'] ?>"><?= $info['label'] ?></span></td>
                                 <td><?= sanitize(date('d/m/Y H:i', strtotime($a['created_at']))) ?></td>
                                 <td class="text-end">
-                                    <a href="/finalweb/admin/account_detail.php?id=<?= (int)$a['id'] ?>"
+                                    <a href="<?= BASE_URL ?>/admin/account_detail.php?id=<?= (int)$a['id'] ?>"
                                        class="btn btn-sm btn-primary">
                                         <i class="bi bi-eye"></i> View
                                     </a>

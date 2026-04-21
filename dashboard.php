@@ -32,7 +32,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i>
                 An admin has requested additional information.
-                <a href="/finalweb/update_id_card.php" class="alert-link">Re-upload your ID card photos here</a>.
+                <a href="<?= BASE_URL ?>/update_id_card.php" class="alert-link">Re-upload your ID card photos here</a>.
             </div>
         <?php endif; ?>
 
@@ -60,7 +60,7 @@ require_once __DIR__ . '/includes/header.php';
                         <p class="mt-2 mb-0 fw-semibold text-dark"><?= $label ?></p>
                     </a>
                 <?php else: ?>
-                    <a href="/finalweb/<?= $url ?>" class="card text-decoration-none text-center p-3 h-100">
+                    <a href="<?= BASE_URL ?>/<?= $url ?>" class="card text-decoration-none text-center p-3 h-100">
                         <i class="bi <?= $icon ?> text-<?= $color ?>" style="font-size: 2rem;"></i>
                         <p class="mt-2 mb-0 fw-semibold text-dark"><?= $label ?></p>
                     </a>
