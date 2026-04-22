@@ -72,14 +72,30 @@ require_once __DIR__ . '/includes/header.php';
             <form method="POST" novalidate>
                 <div class="mb-3">
                     <label for="new_password" class="form-label">New Password</label>
-                    <input type="password" class="form-control" id="new_password" name="new_password" 
-                           placeholder="Enter new password (min 6 characters)" required autofocus>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="new_password" name="new_password" 
+                               placeholder="Enter new password (min 6 characters)" required autofocus>
+                        <button class="btn btn-outline-secondary" 
+                                type="button" 
+                                id="toggleNewPassword"
+                                title="Show/Hide password">
+                            <i class="bi bi-eye" id="toggleNewPasswordIcon"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="confirm_password" class="form-label">Confirm New Password</label>
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
-                           placeholder="Enter new password again" required>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                               placeholder="Enter new password again" required>
+                        <button class="btn btn-outline-secondary" 
+                                type="button" 
+                                id="toggleConfirmPassword"
+                                title="Show/Hide password">
+                            <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="d-grid gap-2">
@@ -94,5 +110,22 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+    function togglePasswordField(buttonId, inputId, iconId) {
+        const btn   = document.getElementById(buttonId);
+        const input = document.getElementById(inputId);
+        const icon  = document.getElementById(iconId);
+ 
+        btn.addEventListener('click', function () {
+            const isHidden = input.type === 'password';
+            input.type   = isHidden ? 'text' : 'password';
+            icon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
+ 
+    togglePasswordField('toggleNewPassword',     'new_password',     'toggleNewPasswordIcon');
+    togglePasswordField('toggleConfirmPassword', 'confirm_password', 'toggleConfirmPasswordIcon');
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/lang.php';   // ← Quan trọng
+require_once __DIR__ . '/includes/lang.php';
 
 // Nếu đã đăng nhập thì chuyển hướng
 if (isLoggedIn()) {
@@ -14,7 +14,7 @@ if (isLoggedIn()) {
     redirect('/finalweb/dashboard.php');
 }
 
-// Xử lý ngôn ngữ (giữ nguyên cách bạn đang làm)
+
 if (isset($_GET['lang'])) {
     $_SESSION['lang'] = ($_GET['lang'] === 'en') ? 'en' : 'vi';
 }
@@ -178,6 +178,12 @@ require_once __DIR__ . '/includes/header.php';
                                    name="password"
                                    placeholder="<?= __("enter_password") ?>" 
                                    required>
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="togglePassword"
+                                    title="Show/Hide password">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -231,5 +237,16 @@ require_once __DIR__ . '/includes/header.php';
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput  = document.getElementById('password');
+    const toggleIcon     = document.getElementById('togglePasswordIcon');
+
+    togglePassword.addEventListener('click', function () {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type  = isHidden ? 'text' : 'password';
+        toggleIcon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+</script>
 </body>
 </html>
