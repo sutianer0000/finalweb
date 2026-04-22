@@ -39,6 +39,7 @@ function getDB() {
                 ]
             );
         } catch (PDOException $e) {
+            error_log("[db] connect failed (host=" . DB_HOST . " port=" . DB_PORT . " db=" . DB_NAME . " user=" . DB_USER . "): " . $e->getMessage());
             die("Database connection failed.");
         }
     }
