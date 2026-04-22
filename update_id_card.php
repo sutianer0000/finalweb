@@ -34,23 +34,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $uploadDir = __DIR__ . '/uploads/id_cards/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $frontExt = pathinfo($_FILES['id_card_front']['name'], PATHINFO_EXTENSION);
-        $backExt  = pathinfo($_FILES['id_card_back']['name'], PATHINFO_EXTENSION);
-        $uniqueId = uniqid();
-        $frontFileName = 'front_' . $uniqueId . '.' . $frontExt;
-        $backFileName  = 'back_'  . $uniqueId . '.' . $backExt;
-
-        move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName);
-        move_uploaded_file($_FILES['id_card_back']['tmp_name'],  $uploadDir . $backFileName);
+        $frontData = file_get_contents($_FILES['id_card_front']['tmp_name']);
+        $backData  = file_get_contents($_FILES['id_card_back']['tmp_name']);
+        $frontMime = $_FILES['id_card_front']['type'];
+        $backMime  = $_FILES['id_card_back']['type'];
 
         // Move status back to pending so admin sees it in the review queue again
-        $db->prepare("UPDATE users SET id_card_front = ?, id_card_back = ?, status = 'pending' WHERE id = ?")
-           ->execute([$frontFileName, $backFileName, $user['id']]);
+        $stmt = $db->prepare("
+            UPDATE users
+            SET id_card_front_data = :front_data,
+                id_card_front_mime = :front_mime,
+                id_card_back_data  = :back_data,
+                id_card_back_mime  = :back_mime,
+                status = 'pending'
+            WHERE id = :id
+        ");
+        $stmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
+        $stmt->bindParam(':front_mime', $frontMime);
+        $stmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
+        $stmt->bindParam(':back_mime',  $backMime);
+        $stmt->bindValue(':id', $user['id'], PDO::PARAM_INT);
+        $stmt->execute();
 
         setFlash('success', 'ID card photos re-uploaded. Your account is pending verification again.');
         redirect(BASE_URL . '/dashboard.php');

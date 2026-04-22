@@ -19,9 +19,11 @@ CREATE TABLE users (
     status ENUM('pending', 'verified', 'disabled', 'waiting_for_updates') DEFAULT 'pending',
     -- First login tracking: user must change password on first login
     first_login TINYINT(1) DEFAULT 1,
-    -- ID card photos
-    id_card_front VARCHAR(255) DEFAULT NULL,
-    id_card_back VARCHAR(255) DEFAULT NULL,
+    -- ID card photos stored as binary blobs directly in DB (no filesystem)
+    id_card_front_data MEDIUMBLOB DEFAULT NULL,
+    id_card_front_mime VARCHAR(50) DEFAULT NULL,
+    id_card_back_data MEDIUMBLOB DEFAULT NULL,
+    id_card_back_mime VARCHAR(50) DEFAULT NULL,
     -- Account lock fields
     failed_login_attempts INT DEFAULT 0,
     has_abnormal_login TINYINT(1) DEFAULT 0,

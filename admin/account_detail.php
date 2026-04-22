@@ -40,8 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect(BASE_URL . '/admin/account_detail.php?id=' . $userId);
 }
 
-// Load full account info for display
-$stmt = $db->prepare("SELECT * FROM users WHERE id = ? AND role = 'user'");
+// Load account info for display — exclude BLOB data columns (only mime needed
+// to know if an image exists; the bytes themselves are streamed via image.php).
+$stmt = $db->prepare("
+    SELECT id, phone_number, email, full_name, date_of_birth, address,
+           balance, role, status, first_login,
+           id_card_front_mime, id_card_back_mime,
+           failed_login_attempts, has_abnormal_login, locked_until,
+           permanently_locked, permanently_locked_at,
+           created_at, updated_at
+    FROM users WHERE id = ? AND role = 'user'
+");
 $stmt->execute([$userId]);
 $account = $stmt->fetch();
 
@@ -128,9 +137,9 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card-body">
                 <div class="mb-3">
                     <label class="text-muted small mb-1">Front</label>
-                    <?php if (!empty($account['id_card_front'])): ?>
-                        <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>" target="_blank">
-                            <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_front']) ?>"
+                    <?php if (!empty($account['id_card_front_mime'])): ?>
+                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front" target="_blank">
+                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front"
                                  alt="ID Front" class="img-fluid rounded border">
                         </a>
                     <?php else: ?>
@@ -139,9 +148,9 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
                 <div>
                     <label class="text-muted small mb-1">Back</label>
-                    <?php if (!empty($account['id_card_back'])): ?>
-                        <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>" target="_blank">
-                            <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($account['id_card_back']) ?>"
+                    <?php if (!empty($account['id_card_back_mime'])): ?>
+                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back" target="_blank">
+                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back"
                                  alt="ID Back" class="img-fluid rounded border">
                         </a>
                     <?php else: ?>

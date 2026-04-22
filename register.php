@@ -88,24 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- If no errors, proceed ---
     if (empty($errors)) {
-        // Upload ID card photos
-        $uploadDir = __DIR__ . '/uploads/id_cards/';
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-            error_log("[upload] mkdir failed for $uploadDir");
-        }
-
-        $frontExt = pathinfo($_FILES['id_card_front']['name'], PATHINFO_EXTENSION);
-        $backExt = pathinfo($_FILES['id_card_back']['name'], PATHINFO_EXTENSION);
-        $uniqueId = uniqid();
-        $frontFileName = 'front_' . $uniqueId . '.' . $frontExt;
-        $backFileName = 'back_' . $uniqueId . '.' . $backExt;
-
-        if (!move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName)) {
-            error_log("[upload] move front failed: " . $_FILES['id_card_front']['tmp_name'] . " -> " . $uploadDir . $frontFileName . " (err=" . $_FILES['id_card_front']['error'] . ")");
-        }
-        if (!move_uploaded_file($_FILES['id_card_back']['tmp_name'], $uploadDir . $backFileName)) {
-            error_log("[upload] move back failed: " . $_FILES['id_card_back']['tmp_name'] . " -> " . $uploadDir . $backFileName . " (err=" . $_FILES['id_card_back']['error'] . ")");
-        }
+        // Read ID card photo bytes directly into BLOBs (no filesystem)
+        $frontData = file_get_contents($_FILES['id_card_front']['tmp_name']);
+        $backData = file_get_contents($_FILES['id_card_back']['tmp_name']);
+        $frontMime = $_FILES['id_card_front']['type'];
+        $backMime = $_FILES['id_card_back']['type'];
 
         // Generate random 6-character password
         $randomPassword = generateRandomString(6);
@@ -113,12 +100,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert into database
         $stmt = $db->prepare("
-            INSERT INTO users (phone_number, email, full_name, date_of_birth, address, password, id_card_front, id_card_back, status, first_login, role)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 1, 'user')
+            INSERT INTO users (phone_number, email, full_name, date_of_birth, address, password, id_card_front_data, id_card_front_mime, id_card_back_data, id_card_back_mime, status, first_login, role)
+            VALUES (:phone, :email, :full_name, :dob, :address, :pwd, :front_data, :front_mime, :back_data, :back_mime, 'pending', 1, 'user')
         ");
-        $stmt->execute([
-            $phone, $email, $fullName, $dob, $address, $hashedPassword, $frontFileName, $backFileName
-        ]);
+        $stmt->bindParam(':phone', $phone);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':full_name', $fullName);
+        $stmt->bindParam(':dob', $dob);
+        $stmt->bindParam(':address', $address);
+        $stmt->bindParam(':pwd', $hashedPassword);
+        $stmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
+        $stmt->bindParam(':front_mime', $frontMime);
+        $stmt->bindParam(':back_data', $backData, PDO::PARAM_LOB);
+        $stmt->bindParam(':back_mime', $backMime);
+        $stmt->execute();
 
         // Send credentials via PHPMailer
         $mailResult = sendRegistrationEmail($email, $fullName, $phone, $randomPassword);

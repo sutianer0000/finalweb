@@ -15,10 +15,20 @@ function isLoggedIn() {
 }
 
 // Get current logged-in user data
+// Explicit column list — excludes the id_card *_data BLOBs so we don't drag
+// ~MBs into every page load. Fetch BLOBs only via image.php.
 function getCurrentUser() {
     if (!isLoggedIn()) return null;
     $db = getDB();
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt = $db->prepare("
+        SELECT id, phone_number, email, full_name, date_of_birth, address,
+               password, balance, role, status, first_login,
+               id_card_front_mime, id_card_back_mime,
+               failed_login_attempts, has_abnormal_login, locked_until,
+               permanently_locked, permanently_locked_at,
+               created_at, updated_at
+        FROM users WHERE id = ?
+    ");
     $stmt->execute([$_SESSION['user_id']]);
     return $stmt->fetch();
 }

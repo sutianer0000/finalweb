@@ -14,9 +14,6 @@ RUN a2enmod rewrite
 WORKDIR /var/www/html
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && mkdir -p /var/www/html/uploads/id_cards \
-    && chown -R www-data:www-data /var/www/html/uploads \
-    && chmod -R 775 /var/www/html/uploads
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 80

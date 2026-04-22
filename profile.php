@@ -125,13 +125,13 @@ require_once __DIR__ . '/includes/header.php';
                 <h5 class="mb-0"><i class="bi bi-card-image"></i> ID Card</h5>
             </div>
             <div class="card-body">
-                <?php if (!empty($user['id_card_front']) || !empty($user['id_card_back'])): ?>
+                <?php if (!empty($user['id_card_front_mime']) || !empty($user['id_card_back_mime'])): ?>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Front</label>
-                            <?php if (!empty($user['id_card_front'])): ?>
-                                <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>" target="_blank">
-                                    <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_front']) ?>"
+                            <?php if (!empty($user['id_card_front_mime'])): ?>
+                                <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$user['id'] ?>&side=front" target="_blank">
+                                    <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$user['id'] ?>&side=front"
                                          alt="ID Card Front"
                                          class="img-fluid rounded border">
                                 </a>
@@ -141,9 +141,9 @@ require_once __DIR__ . '/includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label class="text-muted small mb-1">Back</label>
-                            <?php if (!empty($user['id_card_back'])): ?>
-                                <a href="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>" target="_blank">
-                                    <img src="<?= BASE_URL ?>/uploads/id_cards/<?= sanitize($user['id_card_back']) ?>"
+                            <?php if (!empty($user['id_card_back_mime'])): ?>
+                                <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$user['id'] ?>&side=back" target="_blank">
+                                    <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$user['id'] ?>&side=back"
                                          alt="ID Card Back"
                                          class="img-fluid rounded border">
                                 </a>

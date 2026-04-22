@@ -9,9 +9,9 @@ composer.phar
 .fly/
 fly.toml.bak
 
-# User uploads (keep folder, ignore contents)
-/uploads/*
-!/uploads/.gitkeep
+# Legacy local uploads dir — ID cards now live in DB as BLOBs,
+# but XAMPP dev may still have leftover files on disk. Never commit them.
+/uploads/
 
 # Environment files
 .env

@@ -105,7 +105,7 @@ finalweb/
 │   ├── database.example.php   → copy to database.php (gitignored)
 │   └── mail.example.php       → copy to mail.php     (gitignored)
 ├── includes/            Shared PHP (auth, mailer, header, footer)
-├── uploads/id_cards/    User-uploaded ID photos (gitignored)
+├── image.php            Streams ID card photos from DB (auth-gated)
 ├── vendor/              Composer packages (auto-installed)
 ├── database.sql         Full schema + seed data
 ├── register.php         User registration
