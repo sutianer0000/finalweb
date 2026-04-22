@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/image_util.php';
 requirePasswordChanged();
 
 $user = getCurrentUser();
@@ -34,10 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $frontData = file_get_contents($_FILES['id_card_front']['tmp_name']);
-        $backData  = file_get_contents($_FILES['id_card_back']['tmp_name']);
-        $frontMime = $_FILES['id_card_front']['type'];
-        $backMime  = $_FILES['id_card_back']['type'];
+        try {
+            $front = compressUploadedImage($_FILES['id_card_front']['tmp_name']);
+            $back  = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
+        } catch (RuntimeException $e) {
+            $errors[] = 'Could not process ID card images: ' . $e->getMessage();
+        }
+    }
+
+    if (empty($errors)) {
+        $frontData = $front['data']; $frontMime = $front['mime'];
+        $backData  = $back['data'];  $backMime  = $back['mime'];
 
         // Update mime flags on users + upsert BLOBs into user_id_cards, in one
         // transaction. ON DUPLICATE KEY ensures re-uploads replace old bytes

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/mailer.php';
+require_once __DIR__ . '/includes/image_util.php';
 
 // If already logged in, redirect
 if (isLoggedIn()) {
@@ -88,11 +89,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- If no errors, proceed ---
     if (empty($errors)) {
-        // Read ID card photo bytes directly into BLOBs (no filesystem)
-        $frontData = file_get_contents($_FILES['id_card_front']['tmp_name']);
-        $backData = file_get_contents($_FILES['id_card_back']['tmp_name']);
-        $frontMime = $_FILES['id_card_front']['type'];
-        $backMime = $_FILES['id_card_back']['type'];
+        // Resize + recompress uploads before storing (typically 10-25x smaller
+        // than the raw phone photo — lighter DB, faster transfer).
+        try {
+            $front = compressUploadedImage($_FILES['id_card_front']['tmp_name']);
+            $back  = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
+        } catch (RuntimeException $e) {
+            $errors[] = 'Could not process ID card images: ' . $e->getMessage();
+        }
+    }
+
+    if (empty($errors)) {
+        $frontData = $front['data']; $frontMime = $front['mime'];
+        $backData  = $back['data'];  $backMime  = $back['mime'];
 
         // Generate random 6-character password
         $randomPassword = generateRandomString(6);
