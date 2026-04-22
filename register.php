@@ -90,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         // Upload ID card photos
         $uploadDir = __DIR__ . '/uploads/id_cards/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            error_log("[upload] mkdir failed for $uploadDir");
         }
 
         $frontExt = pathinfo($_FILES['id_card_front']['name'], PATHINFO_EXTENSION);
@@ -100,8 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $frontFileName = 'front_' . $uniqueId . '.' . $frontExt;
         $backFileName = 'back_' . $uniqueId . '.' . $backExt;
 
-        move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName);
-        move_uploaded_file($_FILES['id_card_back']['tmp_name'], $uploadDir . $backFileName);
+        if (!move_uploaded_file($_FILES['id_card_front']['tmp_name'], $uploadDir . $frontFileName)) {
+            error_log("[upload] move front failed: " . $_FILES['id_card_front']['tmp_name'] . " -> " . $uploadDir . $frontFileName . " (err=" . $_FILES['id_card_front']['error'] . ")");
+        }
+        if (!move_uploaded_file($_FILES['id_card_back']['tmp_name'], $uploadDir . $backFileName)) {
+            error_log("[upload] move back failed: " . $_FILES['id_card_back']['tmp_name'] . " -> " . $uploadDir . $backFileName . " (err=" . $_FILES['id_card_back']['error'] . ")");
+        }
 
         // Generate random 6-character password
         $randomPassword = generateRandomString(6);

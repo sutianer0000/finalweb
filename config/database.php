@@ -7,6 +7,9 @@ if (file_exists(__DIR__ . '/local.php')) {
     require_once __DIR__ . '/local.php';
 }
 
+// Application timezone — set once, used by PHP date/time functions everywhere.
+date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Ho_Chi_Minh');
+
 $databaseUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL');
 
 if ($databaseUrl) {
@@ -36,6 +39,7 @@ function getDB() {
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '+07:00'",
                 ]
             );
         } catch (PDOException $e) {
