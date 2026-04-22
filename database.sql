@@ -1,6 +1,15 @@
+-- =====================================================
+-- E-Wallet schema + seed data
+-- Import into phpMyAdmin: the script creates the database fresh, so just
+-- click Import → choose this file → Go. Teammate/dev setups: database
+-- name `ewallet` matches config/local.example.php defaults.
+-- =====================================================
 
+CREATE DATABASE IF NOT EXISTS ewallet
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 
-USE railway;
+USE ewallet;
 
 -- =====================================================
 -- USERS TABLE

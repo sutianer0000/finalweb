@@ -22,6 +22,23 @@ composer.phar
 # OS / editor junk
 .DS_Store
 Thumbs.db
+desktop.ini
+*:Zone.Identifier
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.tmp
+
+# PHP runtime junk
 *.log
+error_log
+php_errors.log
+
+# Temp files from merge/cherry-pick that shouldn't be committed
+*.rej

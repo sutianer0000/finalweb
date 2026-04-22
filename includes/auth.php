@@ -30,7 +30,17 @@ function getCurrentUser() {
         FROM users WHERE id = ?
     ");
     $stmt->execute([$_SESSION['user_id']]);
-    return $stmt->fetch();
+    $user = $stmt->fetch();
+
+    // Session points to a user that no longer exists (e.g. DB was re-imported
+    // while the browser still had the cookie). Wipe the session and force a
+    // fresh login instead of letting callers dereference `false`.
+    if ($user === false) {
+        session_unset();
+        session_destroy();
+        return null;
+    }
+    return $user;
 }
 
 // Redirect helper
@@ -39,9 +49,12 @@ function redirect($url) {
     exit;
 }
 
-// Require login — redirects to login page if not authenticated
+// Require login — redirects to login page if not authenticated.
+// Also catches the "session points to a deleted user" case: getCurrentUser()
+// wipes the session in that scenario, and we redirect instead of letting
+// callers get a null user.
 function requireLogin() {
-    if (!isLoggedIn()) {
+    if (!isLoggedIn() || getCurrentUser() === null) {
         redirect(BASE_URL . '/login.php');
     }
 }
@@ -51,7 +64,7 @@ function requireLogin() {
 function requirePasswordChanged() {
     requireLogin();
     $user = getCurrentUser();
-    if ($user && $user['first_login'] == 1) {
+    if ($user['first_login'] == 1) {
         redirect(BASE_URL . '/first_login_password.php');
     }
 }

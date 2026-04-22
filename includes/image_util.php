@@ -1,51 +1,40 @@
 <?php
-// Server-side image preprocessing for ID card uploads.
+// ID card image upload helper.
 //
-// The normal path is client-side (assets/js/id-card-resize.js) — the browser
-// crops to a centered square and shrinks to 1200x1200 before upload. This
-// PHP helper is the fallback for clients without JS and the canonical
-// "everything stored is 1200x1200 JPEG" guarantee — mirror the same behavior
-// so the database never holds an unprocessed blob.
+// The real preprocessing (center-square crop + resize to 1200x1200 +
+// JPEG recompression) happens client-side in assets/js/id-card-resize.js
+// before the file is POSTed. That means the server only needs to:
+//   1. Verify the upload is actually an image (cheap signature check).
+//   2. Return the raw bytes + mime for storage as a BLOB.
+//
+// No GD / Imagick / any PHP extension required — local XAMPP works out
+// of the box, and Fly.io's PHP image doesn't need extra packages either.
+//
+// Trade-off: users who disable JavaScript bypass the client resize and
+// upload the raw file untouched. The 3 MB file-size cap in register.php
+// and update_id_card.php keeps that bounded, and allowed mime types are
+// validated there too — so even a raw pass-through stays safe.
 
 /**
- * Read an uploaded image, crop to a centered square, scale to $targetSide px,
- * and return recompressed JPEG bytes + mime.
+ * Validate an uploaded image and return its bytes + mime.
  *
- * @throws RuntimeException on invalid/corrupt image
+ * @throws RuntimeException on non-image / corrupt input
  */
 function compressUploadedImage(string $tmpPath, int $targetSide = 1200, int $quality = 85): array {
+    // $targetSide and $quality are kept in the signature for compatibility
+    // with callers, but the actual resize happens in the browser.
+
     $info = @getimagesize($tmpPath);
     if ($info === false) {
         throw new RuntimeException('Uploaded file is not a valid image.');
     }
-    [$origW, $origH] = $info;
 
-    $src = @imagecreatefromstring(file_get_contents($tmpPath));
-    if ($src === false) {
-        throw new RuntimeException('Failed to decode image.');
+    $bytes = file_get_contents($tmpPath);
+    if ($bytes === false) {
+        throw new RuntimeException('Could not read the uploaded file.');
     }
 
-    // Center-square crop: the square's side is the shorter edge of the source.
-    $side = min($origW, $origH);
-    $srcX = (int) floor(($origW - $side) / 2);
-    $srcY = (int) floor(($origH - $side) / 2);
-
-    // Never upscale — if the source square is smaller than $targetSide,
-    // keep its native resolution.
-    $outSide = min($side, $targetSide);
-
-    // Destination canvas is always square. White fill handles any edge bleed
-    // and flattens PNG transparency to white (JPEG has no alpha).
-    $dst = imagecreatetruecolor($outSide, $outSide);
-    $white = imagecolorallocate($dst, 255, 255, 255);
-    imagefilledrectangle($dst, 0, 0, $outSide, $outSide, $white);
-    imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $outSide, $outSide, $side, $side);
-    imagedestroy($src);
-
-    ob_start();
-    imagejpeg($dst, null, $quality);
-    $bytes = ob_get_clean();
-    imagedestroy($dst);
-
-    return ['data' => $bytes, 'mime' => 'image/jpeg'];
+    // $info['mime'] is derived from actual file content (magic bytes), not
+    // from the client-supplied $_FILES[...]['type'], so it's trustworthy.
+    return ['data' => $bytes, 'mime' => $info['mime']];
 }
