@@ -98,22 +98,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $randomPassword = generateRandomString(6);
         $hashedPassword = password_hash($randomPassword, PASSWORD_DEFAULT);
 
-        // Insert into database
-        $stmt = $db->prepare("
-            INSERT INTO users (phone_number, email, full_name, date_of_birth, address, password, id_card_front_data, id_card_front_mime, id_card_back_data, id_card_back_mime, status, first_login, role)
-            VALUES (:phone, :email, :full_name, :dob, :address, :pwd, :front_data, :front_mime, :back_data, :back_mime, 'pending', 1, 'user')
-        ");
-        $stmt->bindParam(':phone', $phone);
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':full_name', $fullName);
-        $stmt->bindParam(':dob', $dob);
-        $stmt->bindParam(':address', $address);
-        $stmt->bindParam(':pwd', $hashedPassword);
-        $stmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
-        $stmt->bindParam(':front_mime', $frontMime);
-        $stmt->bindParam(':back_data', $backData, PDO::PARAM_LOB);
-        $stmt->bindParam(':back_mime', $backMime);
-        $stmt->execute();
+        // Two-table insert in a transaction: users (skinny row, mime flags) +
+        // user_id_cards (heavy BLOB row). Rolled back together on any failure.
+        $db->beginTransaction();
+        try {
+            $stmt = $db->prepare("
+                INSERT INTO users (phone_number, email, full_name, date_of_birth, address, password, id_card_front_mime, id_card_back_mime, status, first_login, role)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 1, 'user')
+            ");
+            $stmt->execute([
+                $phone, $email, $fullName, $dob, $address, $hashedPassword, $frontMime, $backMime
+            ]);
+            $newUserId = (int) $db->lastInsertId();
+
+            $blobStmt = $db->prepare("
+                INSERT INTO user_id_cards (user_id, front_data, back_data)
+                VALUES (:uid, :front_data, :back_data)
+            ");
+            $blobStmt->bindValue(':uid', $newUserId, PDO::PARAM_INT);
+            $blobStmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
+            $blobStmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
+            $blobStmt->execute();
+
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
 
         // Send credentials via PHPMailer
         $mailResult = sendRegistrationEmail($email, $fullName, $phone, $randomPassword);

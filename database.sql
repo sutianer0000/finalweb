@@ -19,10 +19,9 @@ CREATE TABLE users (
     status ENUM('pending', 'verified', 'disabled', 'waiting_for_updates') DEFAULT 'pending',
     -- First login tracking: user must change password on first login
     first_login TINYINT(1) DEFAULT 1,
-    -- ID card photos stored as binary blobs directly in DB (no filesystem)
-    id_card_front_data MEDIUMBLOB DEFAULT NULL,
+    -- ID card photos: mime cols are existence flags; bytes live in user_id_cards
+    -- (separate table so the users row stays skinny — no blobs dragged on joins)
     id_card_front_mime VARCHAR(50) DEFAULT NULL,
-    id_card_back_data MEDIUMBLOB DEFAULT NULL,
     id_card_back_mime VARCHAR(50) DEFAULT NULL,
     -- Account lock fields
     failed_login_attempts INT DEFAULT 0,
@@ -107,6 +106,19 @@ CREATE TABLE phone_cards (
     card_code VARCHAR(10) NOT NULL,  -- 10-digit code: 5 carrier digits + 5 random digits
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- USER ID CARDS TABLE (BLOB storage kept separate from users)
+-- =====================================================
+-- Isolated so the users row never drags MBs of binary on normal queries.
+-- updated_at drives ETag generation for HTTP 304 caching in image.php.
+CREATE TABLE user_id_cards (
+    user_id INT PRIMARY KEY,
+    front_data MEDIUMBLOB DEFAULT NULL,
+    back_data  MEDIUMBLOB DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

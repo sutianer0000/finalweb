@@ -39,22 +39,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $frontMime = $_FILES['id_card_front']['type'];
         $backMime  = $_FILES['id_card_back']['type'];
 
-        // Move status back to pending so admin sees it in the review queue again
-        $stmt = $db->prepare("
-            UPDATE users
-            SET id_card_front_data = :front_data,
-                id_card_front_mime = :front_mime,
-                id_card_back_data  = :back_data,
-                id_card_back_mime  = :back_mime,
-                status = 'pending'
-            WHERE id = :id
-        ");
-        $stmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
-        $stmt->bindParam(':front_mime', $frontMime);
-        $stmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
-        $stmt->bindParam(':back_mime',  $backMime);
-        $stmt->bindValue(':id', $user['id'], PDO::PARAM_INT);
-        $stmt->execute();
+        // Update mime flags on users + upsert BLOBs into user_id_cards, in one
+        // transaction. ON DUPLICATE KEY ensures re-uploads replace old bytes
+        // and bump updated_at (which drives ETag cache invalidation).
+        $db->beginTransaction();
+        try {
+            $stmt = $db->prepare("
+                UPDATE users
+                SET id_card_front_mime = :front_mime,
+                    id_card_back_mime  = :back_mime,
+                    status = 'pending'
+                WHERE id = :id
+            ");
+            $stmt->bindParam(':front_mime', $frontMime);
+            $stmt->bindParam(':back_mime',  $backMime);
+            $stmt->bindValue(':id', $user['id'], PDO::PARAM_INT);
+            $stmt->execute();
+
+            $blobStmt = $db->prepare("
+                INSERT INTO user_id_cards (user_id, front_data, back_data)
+                VALUES (:uid, :front_data, :back_data)
+                ON DUPLICATE KEY UPDATE
+                    front_data = VALUES(front_data),
+                    back_data  = VALUES(back_data)
+            ");
+            $blobStmt->bindValue(':uid', $user['id'], PDO::PARAM_INT);
+            $blobStmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
+            $blobStmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
+            $blobStmt->execute();
+
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
 
         setFlash('success', 'ID card photos re-uploaded. Your account is pending verification again.');
         redirect(BASE_URL . '/dashboard.php');
