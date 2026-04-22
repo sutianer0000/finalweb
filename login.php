@@ -167,6 +167,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                    name="password"
                                    placeholder="<?= __("enter_password") ?>"
                                    required>
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="togglePassword"
+                                    title="Show/Hide password">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -209,5 +215,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput  = document.getElementById('password');
+    const toggleIcon     = document.getElementById('togglePasswordIcon');
+
+    togglePassword.addEventListener('click', function () {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type  = isHidden ? 'text' : 'password';
+        toggleIcon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+</script>
 </body>
 </html>

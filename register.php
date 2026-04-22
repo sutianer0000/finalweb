@@ -162,9 +162,15 @@ require_once __DIR__ . '/includes/header.php';
         <div class="card-body p-4">
 
             <!-- Language Switcher -->
-            <div class="text-end mb-3">
-                <a href="?lang=vi" class="btn btn-sm <?= $lang === 'vi' ? 'btn-primary' : 'btn-outline-primary' ?>">🇻🇳 VI</a>
-                <a href="?lang=en" class="btn btn-sm <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?>">🇬🇧 EN</a>
+            <div class="language-switcher-fixed">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="?lang=vi" class="btn <?= $lang === 'vi' ? 'btn-primary' : 'btn-outline-primary' ?>">
+                        🇻🇳 VI
+                    </a>
+                    <a href="?lang=en" class="btn <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?>">
+                        🇬🇧 EN
+                    </a>
+                </div>
             </div>
 
             <?php if ($success && $credentials): ?>
@@ -188,7 +194,7 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Credential display giữ nguyên -->
+                <!-- Credential display -->
                 <div class="credential-display mb-4">
                     <p class="mb-2"><strong>Email (username):</strong></p>
                     <p class="value"><?= sanitize($credentials['email']) ?></p>
@@ -224,47 +230,57 @@ require_once __DIR__ . '/includes/header.php';
 
                 <form method="POST" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
-                        <label for="phone_number" class="form-label"><?= __("phone_number") ?> <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="phone_number" name="phone_number" 
-                               placeholder="<?= __("phone_placeholder") ?>" 
-                               value="<?= sanitize($_POST['phone_number'] ?? '') ?>" required>
+                        <label for="phone_number" class="form-label"><?= __("phone_number") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone_number" name="phone_number"
+                            placeholder="<?= __("phone_placeholder") ?>"
+                            value="<?= sanitize($_POST['phone_number'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email" class="form-label"><?= __("email_address") ?> <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               placeholder="<?= __("email_placeholder") ?>" 
-                               value="<?= sanitize($_POST['email'] ?? '') ?>" required>
+                        <label for="email" class="form-label"><?= __("email_address") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email"
+                            placeholder="<?= __("email_placeholder") ?>" value="<?= sanitize($_POST['email'] ?? '') ?>"
+                            required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="full_name" class="form-label"><?= __("full_name") ?> <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="full_name" name="full_name" 
-                               placeholder="<?= __("full_name_placeholder") ?>" 
-                               value="<?= sanitize($_POST['full_name'] ?? '') ?>" required>
+                        <label for="full_name" class="form-label"><?= __("full_name") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name"
+                            placeholder="<?= __("full_name_placeholder") ?>"
+                            value="<?= sanitize($_POST['full_name'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="date_of_birth" class="form-label"><?= __("date_of_birth") ?> <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
-                               value="<?= sanitize($_POST['date_of_birth'] ?? '') ?>" required>
+                        <label for="date_of_birth" class="form-label"><?= __("date_of_birth") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth"
+                            value="<?= sanitize($_POST['date_of_birth'] ?? '') ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="address" class="form-label"><?= __("address") ?> <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="address" name="address" rows="2" 
-                                  placeholder="<?= __("address_placeholder") ?>" required><?= sanitize($_POST['address'] ?? '') ?></textarea>
+                        <label for="address" class="form-label"><?= __("address") ?> <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="address" name="address" rows="2"
+                            placeholder="<?= __("address_placeholder") ?>"
+                            required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
+                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*"
+                            required>
                         <div class="form-text"><?= __("front_help") ?></div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
+                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*"
+                            required>
                         <div class="form-text"><?= __("back_help") ?></div>
                     </div>
 
