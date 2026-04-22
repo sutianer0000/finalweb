@@ -1,0 +1,12 @@
+.git
+.gitignore
+.vscode
+.idea
+*.log
+config/local.php
+uploads/id_cards/*
+!uploads/id_cards/.gitkeep
+vendor/
+composer.phar
+nixpacks.toml
+README.md

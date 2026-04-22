@@ -1,9 +1,13 @@
 # Local-only config (contains real credentials for XAMPP dev)
 config/local.php
 
-# Composer dependencies — installed by Railway / composer install
+# Composer dependencies — installed by the build (Railway/Fly/etc.)
 /vendor/
 composer.phar
+
+# Fly.io local state
+.fly/
+fly.toml.bak
 
 # User uploads (keep folder, ignore contents)
 /uploads/*

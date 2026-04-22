@@ -31,7 +31,9 @@ function sendMail(string $toEmail, string $toName, string $subject, string $html
         $mail->send();
         return ['ok' => true, 'error' => null];
     } catch (Exception $e) {
-        return ['ok' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
+        $err = $mail->ErrorInfo ?: $e->getMessage();
+        error_log("[mailer] send failed: $err");
+        return ['ok' => false, 'error' => $err];
     }
 }
 
