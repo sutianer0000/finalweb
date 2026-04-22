@@ -1,7 +1,7 @@
 <?php
-// SMTP configuration — reads from environment variables.
-// Required env vars (set on Railway dashboard, or in config/local.php for XAMPP):
-//   SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_SECURE, MAIL_FROM, MAIL_FROM_NAME
+// SMTP configuration — reads credentials from env vars set in config/local.php.
+// Required: SMTP_USERNAME, SMTP_PASSWORD, MAIL_FROM.
+// Others fall back to Gmail defaults if unset.
 
 if (file_exists(__DIR__ . '/local.php')) {
     require_once __DIR__ . '/local.php';

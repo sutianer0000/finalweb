@@ -1,19 +1,20 @@
-# Local-only config (contains real credentials for XAMPP dev)
+# =========================================================================
+# thin-local branch — local XAMPP development only.
+# Everything credential-bearing or environment-specific stays out of git.
+# =========================================================================
+
+# Local config (DB + SMTP credentials). NEVER commit.
 config/local.php
 
-# Composer dependencies — installed by the build (Railway/Fly/etc.)
+# Composer dependencies — run `composer install` to restore.
 /vendor/
 composer.phar
 
-# Fly.io local state
-.fly/
-fly.toml.bak
-
 # Legacy local uploads dir — ID cards now live in DB as BLOBs,
-# but XAMPP dev may still have leftover files on disk. Never commit them.
+# but older XAMPP runs may have leftover files on disk. Never commit them.
 /uploads/
 
-# Environment files
+# Environment files (in case anyone adds .env-style loading later)
 .env
 .env.*
 !.env.example
