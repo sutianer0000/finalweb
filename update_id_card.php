@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!in_array($_FILES[$field]['type'], $allowedTypes)) {
                 $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be an image (JPEG, PNG, GIF, WEBP).';
             }
-            if ($_FILES[$field]['size'] > 5 * 1024 * 1024) {
-                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 5MB.';
+            if ($_FILES[$field]['size'] > 3 * 1024 * 1024) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 3MB.';
             }
         }
     }
@@ -115,13 +115,13 @@ require_once __DIR__ . '/includes/header.php';
                     <div class="mb-3">
                         <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
-                        <div class="form-text">JPG, PNG, GIF or WEBP. Max 5 MB.</div>
+                        <div class="form-text">Max 3 MB. Any size — we center-crop to a square automatically.</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_card_back" class="form-label">ID Card - Back Photo <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
-                        <div class="form-text">JPG, PNG, GIF or WEBP. Max 5 MB.</div>
+                        <div class="form-text">Max 3 MB. Any size — we center-crop to a square automatically.</div>
                     </div>
 
                     <div class="d-grid">
@@ -135,4 +135,5 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<script src="<?= BASE_URL ?>/assets/js/id-card-resize.js"></script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
