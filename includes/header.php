@@ -17,7 +17,7 @@ $flash = getFlash();
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark sn-nav">
         <div class="container">
             <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>/index.php">
                 <i class="bi bi-wallet2"></i> E-Wallet

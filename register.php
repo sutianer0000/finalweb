@@ -94,15 +94,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // than the raw phone photo — lighter DB, faster transfer).
         try {
             $front = compressUploadedImage($_FILES['id_card_front']['tmp_name']);
-            $back  = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
+            $back = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
         } catch (RuntimeException $e) {
             $errors[] = 'Could not process ID card images: ' . $e->getMessage();
         }
     }
 
     if (empty($errors)) {
-        $frontData = $front['data']; $frontMime = $front['mime'];
-        $backData  = $back['data'];  $backMime  = $back['mime'];
+        $frontData = $front['data'];
+        $frontMime = $front['mime'];
+        $backData = $back['data'];
+        $backMime = $back['mime'];
 
         // Generate random 6-character password
         $randomPassword = generateRandomString(6);
@@ -117,7 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 1, 'user')
             ");
             $stmt->execute([
-                $phone, $email, $fullName, $dob, $address, $hashedPassword, $frontMime, $backMime
+                $phone,
+                $email,
+                $fullName,
+                $dob,
+                $address,
+                $hashedPassword,
+                $frontMime,
+                $backMime
             ]);
             $newUserId = (int) $db->lastInsertId();
 
@@ -127,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $blobStmt->bindValue(':uid', $newUserId, PDO::PARAM_INT);
             $blobStmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
-            $blobStmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
+            $blobStmt->bindParam(':back_data', $backData, PDO::PARAM_LOB);
             $blobStmt->execute();
 
             $db->commit();
@@ -154,24 +163,15 @@ $pageTitle = 'Register';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div class="register-card">
-    <div class="card">
-        <div class="card-header bg-primary text-white text-center">
-            <h4 class="mb-0"><i class="bi bi-person-plus"></i> <?= __("create_account") ?></h4>
+<div class="container d-flex justify-content-center">
+    <div class="card sn-login-card" style="max-width:600px;width:100%;">
+        <!-- HEADER -->
+        <div class="card-header text-white text-center py-4">
+            <i class="bi bi-person-plus fs-1 mb-2"></i>
+            <h4 class="mb-0 fw-bold"><?= __("create_account") ?></h4>
         </div>
-        <div class="card-body p-4">
 
-            <!-- Language Switcher -->
-            <div class="language-switcher-fixed">
-                <div class="btn-group btn-group-sm" role="group">
-                    <a href="?lang=vi" class="btn <?= $lang === 'vi' ? 'btn-primary' : 'btn-outline-primary' ?>">
-                        🇻🇳 VI
-                    </a>
-                    <a href="?lang=en" class="btn <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?>">
-                        🇬🇧 EN
-                    </a>
-                </div>
-            </div>
+        <div class="card-body p-4">
 
             <?php if ($success && $credentials): ?>
                 <!-- Registration Success -->
@@ -182,7 +182,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
 
                 <?php if (!$credentials['email_sent']): ?>
-                    <div class="alert alert-warning">
+                    <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle"></i> <?= __("could_not_send_email") ?>
                         <?php if (!empty($credentials['mail_error'])): ?>
                             <div class="small text-muted mt-1">Mailer: <?= sanitize($credentials['mail_error']) ?></div>
@@ -268,20 +268,34 @@ require_once __DIR__ . '/includes/header.php';
                             required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span
-                                class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*"
-                            required>
-                        <div class="form-text"><?= __("front_help") ?></div>
+                    <div class="mb-4">
+                        <label class="form-label"><?= __("id_card_front") ?> *</label>
+
+                        <div class="upload-box" onclick="document.getElementById('id_card_front').click()">
+                            <input type="file" id="id_card_front" name="id_card_front" accept="image/*" hidden required>
+
+                            <div class="upload-content text-center">
+                                <i class="bi bi-cloud-arrow-up fs-2"></i>
+                                <p class="mb-0"><?= __("drop_or_click") ?? "Drop a photo here or click to choose" ?></p>
+                            </div>
+
+                            <img id="preview_front" class="upload-preview d-none">
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span
-                                class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*"
-                            required>
-                        <div class="form-text"><?= __("back_help") ?></div>
+                    <div class="mb-4">
+                        <label class="form-label"><?= __("id_card_back") ?> *</label>
+
+                        <div class="upload-box" onclick="document.getElementById('id_card_back').click()">
+                            <input type="file" id="id_card_back" name="id_card_back" accept="image/*" hidden required>
+
+                            <div class="upload-content text-center">
+                                <i class="bi bi-cloud-arrow-up fs-2"></i>
+                                <p class="mb-0"><?= __("drop_or_click") ?? "Drop a photo here or click to choose" ?></p>
+                            </div>
+
+                            <img id="preview_back" class="upload-preview d-none">
+                        </div>
                     </div>
 
                     <div class="d-grid">
@@ -295,6 +309,18 @@ require_once __DIR__ . '/includes/header.php';
                     <p><?= __("already_have_account") ?> <a href="<?= BASE_URL ?>/login.php"><?= __("login_here") ?></a></p>
                 </div>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Language Switcher -->
+    <div class="language-switcher-fixed">
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="?lang=vi" class="btn <?= $lang === 'vi' ? 'btn-primary' : 'btn-outline-primary' ?>">
+                🇻🇳 VI
+            </a>
+            <a href="?lang=en" class="btn <?= $lang === 'en' ? 'btn-primary' : 'btn-outline-primary' ?>">
+                🇬🇧 EN
+            </a>
         </div>
     </div>
 </div>
