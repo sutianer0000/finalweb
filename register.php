@@ -75,13 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Back photo of ID card is required.';
     }
 
-    // Validate image files
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     foreach (['id_card_front', 'id_card_back'] as $field) {
         if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
-            if (!in_array($_FILES[$field]['type'], $allowedTypes)) {
-                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be an image file (JPEG, PNG, GIF, WEBP).';
-            }
             if ($_FILES[$field]['size'] > 3 * 1024 * 1024) {
                 $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 3MB.';
             }
@@ -93,22 +88,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Resize + recompress uploads before storing (typically 10-25x smaller
         // than the raw phone photo — lighter DB, faster transfer).
         try {
-            $front = compressUploadedImage($_FILES['id_card_front']['tmp_name']);
-            $back = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
+            $front = processUploadedIdCardImage($_FILES['id_card_front']['tmp_name'], 'ID card front');
+            $back  = processUploadedIdCardImage($_FILES['id_card_back']['tmp_name'], 'ID card back');
         } catch (RuntimeException $e) {
             $errors[] = 'Could not process ID card images: ' . $e->getMessage();
         }
     }
 
     if (empty($errors)) {
-        $frontData = $front['data'];
-        $frontMime = $front['mime'];
-        $backData = $back['data'];
-        $backMime = $back['mime'];
-
         // Generate random 6-character password
         $randomPassword = generateRandomString(6);
         $hashedPassword = password_hash($randomPassword, PASSWORD_DEFAULT);
+        $front = array_merge($front, getPostedOriginalIdCardDimensions('id_card_front', $front));
+        $back = array_merge($back, getPostedOriginalIdCardDimensions('id_card_back', $back));
 
         // Two-table insert in a transaction: users (skinny row, mime flags) +
         // user_id_cards (heavy BLOB row). Rolled back together on any failure.
@@ -119,25 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 1, 'user')
             ");
             $stmt->execute([
-                $phone,
-                $email,
-                $fullName,
-                $dob,
-                $address,
-                $hashedPassword,
-                $frontMime,
-                $backMime
+                $phone, $email, $fullName, $dob, $address, $hashedPassword, $front['mime'], $back['mime']
             ]);
             $newUserId = (int) $db->lastInsertId();
 
-            $blobStmt = $db->prepare("
-                INSERT INTO user_id_cards (user_id, front_data, back_data)
-                VALUES (:uid, :front_data, :back_data)
-            ");
-            $blobStmt->bindValue(':uid', $newUserId, PDO::PARAM_INT);
-            $blobStmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
-            $blobStmt->bindParam(':back_data', $backData, PDO::PARAM_LOB);
-            $blobStmt->execute();
+            storeUserIdCardImages($db, $newUserId, $front, $back);
 
             $db->commit();
         } catch (Exception $e) {
@@ -269,6 +247,7 @@ require_once __DIR__ . '/includes/header.php';
                             required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
+<<<<<<< Updated upstream
                     <div class="mb-4">
                         <label class="form-label"><?= __("id_card_front") ?> *</label>
 
@@ -297,6 +276,24 @@ require_once __DIR__ . '/includes/header.php';
 
                             <img id="preview_back" class="upload-preview d-none">
                         </div>
+=======
+                    <div class="mb-3">
+                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*"
+                            required>
+                        <div class="form-text"><?= __("front_help") ?></div>
+                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*"
+                            required>
+                        <div class="form-text"><?= __("back_help") ?></div>
+                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
+>>>>>>> Stashed changes
                     </div>
 
                     <div class="d-grid">

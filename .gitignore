@@ -42,3 +42,25 @@ php_errors.log
 
 # Temp files from merge/cherry-pick that shouldn't be committed
 *.rej
+
+# Local-only design briefs / scratch docs (generated, not source-of-truth).
+# Keep design discussions on Drive/Discord — binaries don't diff well.
+UI_BRIEF_SUBNAUTICA.*
+*.scratch.md
+
+# Python bytecode (if anyone runs the doc-generator script locally)
+__pycache__/
+*.pyc
+
+# Defensive — in case someone adds JS tooling later
+node_modules/
+
+# Database dumps / backups (keep production data out of git)
+*.sql.bak
+*.sql.gz
+*.dump
+
+# IDE projects (catches more than .vscode / .idea)
+*.iml
+.project
+.settings/

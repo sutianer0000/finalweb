@@ -4,6 +4,20 @@ requireAdmin();
 
 $db = getDB();
 
+function formatAuditBytes($bytes) {
+    if ($bytes === null) {
+        return 'Unknown';
+    }
+    $bytes = (int) $bytes;
+    if ($bytes < 1024) {
+        return $bytes . ' B';
+    }
+    if ($bytes < 1024 * 1024) {
+        return number_format($bytes / 1024, 1) . ' KB';
+    }
+    return number_format($bytes / (1024 * 1024), 2) . ' MB';
+}
+
 $userId = (int)($_GET['id'] ?? 0);
 if ($userId <= 0) {
     setFlash('error', 'Invalid account ID.');
@@ -39,13 +53,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $stmt = $db->prepare("
-    SELECT id, phone_number, email, full_name, date_of_birth, address,
-           balance, role, status, first_login,
-           id_card_front_mime, id_card_back_mime,
-           failed_login_attempts, has_abnormal_login, locked_until,
-           permanently_locked, permanently_locked_at,
-           created_at, updated_at
-    FROM users WHERE id = ? AND role = 'user'
+    SELECT users.id, users.phone_number, users.email, users.full_name, users.date_of_birth, users.address,
+           users.balance, users.role, users.status, users.first_login,
+           users.id_card_front_mime, users.id_card_back_mime,
+           c.front_width, c.front_height, c.front_size_bytes,
+           c.back_width, c.back_height, c.back_size_bytes,
+           c.front_orig_width, c.front_orig_height,
+           c.back_orig_width, c.back_orig_height,
+           c.updated_at AS id_card_updated_at,
+           users.failed_login_attempts, users.has_abnormal_login, users.locked_until,
+           users.permanently_locked, users.permanently_locked_at,
+           users.created_at, users.updated_at
+    FROM users
+    LEFT JOIN user_id_cards c ON c.user_id = users.id
+    WHERE users.id = ? AND users.role = 'user'
 ");
 $stmt->execute([$userId]);
 $account = $stmt->fetch();
@@ -139,6 +160,11 @@ require_once __DIR__ . '/../includes/header.php';
                         <dd><?= $account['permanently_locked'] ? 'Yes' : 'No' ?></dd>
                     </dl>
                 </div>
+                <?php if (!empty($account['id_card_updated_at'])): ?>
+                    <div class="small text-muted mt-3">
+                        Last updated: <?= sanitize(date('d/m/Y H:i', strtotime($account['id_card_updated_at']))) ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -159,6 +185,12 @@ require_once __DIR__ . '/../includes/header.php';
                                                  alt="ID Front">
                                         </a>
                                     </div>
+                                    <div class="small text-muted mt-2">
+                                        <div>MIME: <?= sanitize($account['id_card_front_mime']) ?></div>
+                                        <div>Original upload: <?= $account['front_orig_width'] && $account['front_orig_height'] ? (int)$account['front_orig_width'] . ' x ' . (int)$account['front_orig_height'] : 'Unknown' ?></div>
+                                        <div>Stored size: <?= sanitize(formatAuditBytes($account['front_size_bytes'])) ?></div>
+                                        <div>Stored resolution: <?= $account['front_width'] && $account['front_height'] ? (int)$account['front_width'] . ' x ' . (int)$account['front_height'] : 'Unknown' ?></div>
+                                    </div>
                                 <?php else: ?>
                                     <div class="admin-empty">Not uploaded</div>
                                 <?php endif; ?>
@@ -172,6 +204,12 @@ require_once __DIR__ . '/../includes/header.php';
                                             <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back"
                                                  alt="ID Back">
                                         </a>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        <div>MIME: <?= sanitize($account['id_card_back_mime']) ?></div>
+                                        <div>Original upload: <?= $account['back_orig_width'] && $account['back_orig_height'] ? (int)$account['back_orig_width'] . ' x ' . (int)$account['back_orig_height'] : 'Unknown' ?></div>
+                                        <div>Stored size: <?= sanitize(formatAuditBytes($account['back_size_bytes'])) ?></div>
+                                        <div>Stored resolution: <?= $account['back_width'] && $account['back_height'] ? (int)$account['back_width'] . ' x ' . (int)$account['back_height'] : 'Unknown' ?></div>
                                     </div>
                                 <?php else: ?>
                                     <div class="admin-empty">Not uploaded</div>

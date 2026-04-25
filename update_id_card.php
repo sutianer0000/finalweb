@@ -22,12 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Back photo of ID card is required.';
     }
 
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     foreach (['id_card_front', 'id_card_back'] as $field) {
         if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
-            if (!in_array($_FILES[$field]['type'], $allowedTypes)) {
-                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be an image (JPEG, PNG, GIF, WEBP).';
-            }
             if ($_FILES[$field]['size'] > 3 * 1024 * 1024) {
                 $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' must be less than 3MB.';
             }
@@ -36,16 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $front = compressUploadedImage($_FILES['id_card_front']['tmp_name']);
-            $back  = compressUploadedImage($_FILES['id_card_back']['tmp_name']);
+            $front = processUploadedIdCardImage($_FILES['id_card_front']['tmp_name'], 'ID card front');
+            $back  = processUploadedIdCardImage($_FILES['id_card_back']['tmp_name'], 'ID card back');
         } catch (RuntimeException $e) {
             $errors[] = 'Could not process ID card images: ' . $e->getMessage();
         }
     }
 
     if (empty($errors)) {
-        $frontData = $front['data']; $frontMime = $front['mime'];
-        $backData  = $back['data'];  $backMime  = $back['mime'];
+        $front = array_merge($front, getPostedOriginalIdCardDimensions('id_card_front', $front));
+        $back = array_merge($back, getPostedOriginalIdCardDimensions('id_card_back', $back));
 
         // Update mime flags on users + upsert BLOBs into user_id_cards, in one
         // transaction. ON DUPLICATE KEY ensures re-uploads replace old bytes
@@ -59,22 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     status = 'pending'
                 WHERE id = :id
             ");
-            $stmt->bindParam(':front_mime', $frontMime);
-            $stmt->bindParam(':back_mime',  $backMime);
+            $stmt->bindValue(':front_mime', $front['mime']);
+            $stmt->bindValue(':back_mime',  $back['mime']);
             $stmt->bindValue(':id', $user['id'], PDO::PARAM_INT);
             $stmt->execute();
 
-            $blobStmt = $db->prepare("
-                INSERT INTO user_id_cards (user_id, front_data, back_data)
-                VALUES (:uid, :front_data, :back_data)
-                ON DUPLICATE KEY UPDATE
-                    front_data = VALUES(front_data),
-                    back_data  = VALUES(back_data)
-            ");
-            $blobStmt->bindValue(':uid', $user['id'], PDO::PARAM_INT);
-            $blobStmt->bindParam(':front_data', $frontData, PDO::PARAM_LOB);
-            $blobStmt->bindParam(':back_data',  $backData,  PDO::PARAM_LOB);
-            $blobStmt->execute();
+            storeUserIdCardImages($db, (int) $user['id'], $front, $back);
 
             $db->commit();
         } catch (Exception $e) {
@@ -115,13 +101,15 @@ require_once __DIR__ . '/includes/header.php';
                     <div class="mb-3">
                         <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>
-                        <div class="form-text">Max 3 MB. Any size — we center-crop to a square automatically.</div>
+                        <div class="form-text">Max 3 MB. Minimum 900 x 600 px.</div>
+                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_card_back" class="form-label">ID Card - Back Photo <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*" required>
-                        <div class="form-text">Max 3 MB. Any size — we center-crop to a square automatically.</div>
+                        <div class="form-text">Max 3 MB. Minimum 900 x 600 px.</div>
+                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
                     </div>
 
                     <div class="d-grid">

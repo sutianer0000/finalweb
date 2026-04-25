@@ -3,6 +3,16 @@ if (!isset($pageTitle)) $pageTitle = 'E-Wallet';
 $pageStyles = $pageStyles ?? [];
 $currentUser = isLoggedIn() ? getCurrentUser() : null;
 $flash = getFlash();
+
+// Load notification helper only for logged-in users — keeps cost off the
+// login / register / public pages.
+$unreadNotifCount = 0;
+$recentNotifications = [];
+if ($currentUser && $currentUser['role'] === 'user') {
+    require_once __DIR__ . '/notifications.php';
+    $unreadNotifCount = getUnreadNotificationCount($currentUser['id']);
+    $recentNotifications = getUserNotifications($currentUser['id'], 5);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,9 +59,66 @@ $flash = getFlash();
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/dashboard.php">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/accounts.php">Accounts</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/pending_transactions.php">Pending Transactions</a></li>
+                            <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/notifications.php"><i class="bi bi-megaphone"></i> Notifications</a></li>
                         <?php endif; ?>
                     </ul>
                     <ul class="navbar-nav">
+                        <?php if ($currentUser['role'] === 'user'): ?>
+                            <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle position-relative" href="#" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                        <i class="bi bi-bell<?= $unreadNotifCount > 0 ? '-fill' : '' ?>"></i>
+                                        <?php if ($unreadNotifCount > 0): ?>
+                                            <span class="position-absolute top-25 start-75 translate-middle badge rounded-pill bg-danger"
+                                                  style="font-size: 0.65rem;">
+                                                <?= $unreadNotifCount > 99 ? '99+' : $unreadNotifCount ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end p-0 overflow-hidden" style="min-width: 340px;">
+                                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                                            <strong>Notifications</strong>
+                                            <a href="<?= BASE_URL ?>/notifications.php?view=unread" class="small text-decoration-none">Unread</a>
+                                        </div>
+                                        <?php if (empty($recentNotifications)): ?>
+                                            <div class="px-3 py-4 text-center text-muted small">
+                                                No notifications yet.
+                                            </div>
+                                        <?php else: ?>
+                                            <?php foreach ($recentNotifications as $notif): ?>
+                                                <?php $notifTypeMeta = getNotificationTypeMeta($notif['notification_type']); ?>
+                                                <a href="<?= BASE_URL ?>/notifications.php"
+                                                   class="dropdown-item px-3 py-3 border-bottom">
+                                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                                        <div class="flex-grow-1">
+                                                            <div class="mb-1">
+                                                                <span class="badge bg-<?= sanitize($notifTypeMeta['badge']) ?>">
+                                                                    <?= sanitize($notifTypeMeta['label']) ?>
+                                                                </span>
+                                                            </div>
+                                                            <div class="fw-semibold text-wrap">
+                                                                <?= sanitize($notif['title']) ?>
+                                                                <?php if (!$notif['is_read']): ?>
+                                                                    <span class="badge bg-primary ms-1">NEW</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <div class="small text-muted text-wrap">
+                                                                <?= sanitize(mb_strimwidth($notif['message'], 0, 90, '...')) ?>
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted text-nowrap">
+                                                            <?= sanitize(formatNotificationRelativeTime($notif['created_at'])) ?>
+                                                        </small>
+                                                    </div>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                        <div class="px-3 py-2 bg-light border-top text-end">
+                                            <a href="<?= BASE_URL ?>/notifications.php" class="small text-decoration-none">View all notifications</a>
+                                        </div>
+                                    </div>
+                            </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <span class="nav-link text-light">
                                 <i class="bi bi-person-circle"></i> <?= sanitize($currentUser['full_name']) ?>

@@ -25,8 +25,8 @@ $translations = [
         'email_placeholder' => 'Ví dụ: user@example.com',
         'full_name_placeholder' => 'Ví dụ: Nguyễn Văn A',
         'address_placeholder' => 'Nhập địa chỉ đầy đủ của bạn',
-        'front_help' => 'Tối đa 3 MB. Mọi kích thước đều được, hệ thống sẽ tự cắt về hình vuông.',
-        'back_help' => 'Tối đa 3 MB. Mọi kích thước đều được, hệ thống sẽ tự cắt về hình vuông.',
+        'front_help' => 'Tối đa 3 MB. Tối thiểu 900 x 600 px.',
+        'back_help' => 'Tối đa 3 MB. Tối thiểu 900 x 600 px.',
 
         'phone_required' => 'Số điện thoại là bắt buộc.',
         'phone_format' => 'Số điện thoại phải từ 9-15 chữ số.',
@@ -50,6 +50,14 @@ $translations = [
         'account_disabled' => 'Tài khoản đã bị vô hiệu hóa, vui lòng liên hệ hotline 18001008.',
         'account_permanently_locked' => 'Tài khoản đã bị khóa do nhập sai mật khẩu nhiều lần, vui lòng liên hệ quản trị viên.',
         'account_temporarily_locked' => 'Tài khoản đang bị tạm khóa, vui lòng thử lại sau 1 phút.',
+
+        // Notifications (user-facing)
+        'notifications' => 'Thông báo',
+        'your_notifications' => 'Thông báo của bạn',
+        'no_notifications' => 'Chưa có thông báo nào.',
+        'new_badge' => 'MỚI',
+        'from' => 'Từ',
+        'broadcast' => 'Thông báo chung',
 
         'dashboard_title' => 'Bảng điều khiển',
         'command_deck' => 'Bảng điều khiển',
@@ -124,8 +132,8 @@ $translations = [
         'email_placeholder' => 'e.g. user@example.com',
         'full_name_placeholder' => 'e.g. Nguyen Van A',
         'address_placeholder' => 'Enter your full address',
-        'front_help' => 'Max 3 MB. Any size, we center-crop to a square automatically.',
-        'back_help' => 'Max 3 MB. Any size, we center-crop to a square automatically.',
+        'front_help' => 'Max 3 MB. Minimum 900 x 600 px.',
+        'back_help' => 'Max 3 MB. Minimum 900 x 600 px.',
 
         'login_title' => 'Login - E-Wallet',
         'e_wallet' => 'E-Wallet',

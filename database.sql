@@ -4,6 +4,8 @@
 -- click Import → choose this file → Go. Teammate/dev setups: database
 -- name `ewallet` matches config/local.example.php defaults.
 -- =====================================================
+-- Keep this file synced with every migration so fresh imports always create
+-- the newest complete schema directly.
 
 CREATE DATABASE IF NOT EXISTS ewallet
     CHARACTER SET utf8mb4
@@ -127,8 +129,42 @@ CREATE TABLE user_id_cards (
     user_id INT PRIMARY KEY,
     front_data MEDIUMBLOB DEFAULT NULL,
     back_data  MEDIUMBLOB DEFAULT NULL,
+    front_width INT DEFAULT NULL,
+    front_height INT DEFAULT NULL,
+    front_size_bytes INT DEFAULT NULL,
+    back_width INT DEFAULT NULL,
+    back_height INT DEFAULT NULL,
+    back_size_bytes INT DEFAULT NULL,
+    front_orig_width INT DEFAULT NULL,  -- user's original upload dims (pre-crop)
+    front_orig_height INT DEFAULT NULL,
+    back_orig_width INT DEFAULT NULL,
+    back_orig_height INT DEFAULT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- NOTIFICATIONS TABLE (admin → user messages)
+-- =====================================================
+-- One row per recipient per notification. Broadcasts (admin → all users)
+-- get unrolled into N rows sharing a broadcast_key so the admin UI can
+-- still group them as "one sent message" with an aggregate read count.
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    notification_type VARCHAR(30) NOT NULL DEFAULT 'general',
+    audience_scope VARCHAR(20) NOT NULL DEFAULT 'user',
+    audience_key VARCHAR(50) DEFAULT NULL,
+    is_broadcast TINYINT(1) DEFAULT 0,
+    broadcast_key VARCHAR(32) DEFAULT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    read_at DATETIME DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- =====================================================
@@ -181,3 +217,7 @@ CREATE INDEX idx_transactions_created ON transactions(created_at);
 CREATE INDEX idx_otp_user ON otp_codes(user_id);
 CREATE INDEX idx_phone_cards_transaction ON phone_cards(transaction_id);
 CREATE INDEX idx_login_history_user ON login_history(user_id);
+CREATE INDEX idx_notif_user ON notifications(user_id);
+CREATE INDEX idx_notif_created ON notifications(created_at);
+CREATE INDEX idx_notif_broadcast ON notifications(broadcast_key);
+CREATE INDEX idx_notif_type ON notifications(notification_type);
