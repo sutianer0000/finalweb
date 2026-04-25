@@ -25,7 +25,7 @@ if ($targetUserId <= 0 || !in_array($side, ['front', 'back'], true)) {
 
 $me = getCurrentUser();
 $isOwner = $me && (int) $me['id'] === $targetUserId;
-$isAdmin = $me && $me['role'] === 'admin';
+$isAdmin = $me && in_array($me['role'], ['admin', 'superadmin'], true);
 
 if (!$isOwner && !$isAdmin) {
     http_response_code(403);
