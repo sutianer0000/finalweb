@@ -1,0 +1,415 @@
+.admin-shell {
+    color: #d8e8ef;
+}
+
+.admin-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-heading h3 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.admin-heading p {
+    margin: 0.25rem 0 0;
+    color: rgba(216, 232, 239, 0.62);
+    font-size: 0.92rem;
+}
+
+.admin-panel {
+    background: linear-gradient(180deg, rgba(9, 26, 49, 0.96), rgba(5, 17, 33, 0.98));
+}
+
+.admin-panel + .admin-panel {
+    margin-top: 1rem;
+}
+
+.admin-panel-header {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid rgba(56, 225, 255, 0.12);
+}
+
+.admin-panel-header h5,
+.admin-panel-header h6 {
+    margin: 0;
+    font-weight: 700;
+}
+
+.admin-panel-body {
+    padding: 1rem;
+}
+
+.admin-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.admin-stat-card {
+    display: block;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(56, 225, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(4, 16, 30, 0.9);
+    color: #d8e8ef;
+}
+
+.admin-stat-card:hover {
+    color: #d8e8ef;
+    border-color: rgba(56, 225, 255, 0.22);
+}
+
+.admin-stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-stat-label {
+    color: rgba(216, 232, 239, 0.62);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.admin-stat-value {
+    margin-top: 0.55rem;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.admin-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-chip.is-verified {
+    color: #96f0c6;
+    background: rgba(42, 157, 143, 0.14);
+    border-color: rgba(42, 157, 143, 0.32);
+}
+
+.admin-chip.is-pending {
+    color: #ffd38b;
+    background: rgba(255, 179, 71, 0.14);
+    border-color: rgba(255, 179, 71, 0.28);
+}
+
+.admin-chip.is-waiting {
+    color: #8eeeff;
+    background: rgba(56, 225, 255, 0.14);
+    border-color: rgba(56, 225, 255, 0.28);
+}
+
+.admin-chip.is-disabled,
+.admin-chip.is-rejected {
+    color: #ffab97;
+    background: rgba(255, 122, 89, 0.14);
+    border-color: rgba(255, 122, 89, 0.28);
+}
+
+.admin-chip.is-approved {
+    color: #96f0c6;
+    background: rgba(42, 157, 143, 0.14);
+    border-color: rgba(42, 157, 143, 0.32);
+}
+
+.admin-chip.is-info {
+    color: #9edcf2;
+    background: rgba(120, 180, 210, 0.14);
+    border-color: rgba(120, 180, 210, 0.28);
+}
+
+.admin-toolbar {
+    position: sticky;
+    top: 76px;
+    z-index: 20;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(56, 225, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(6, 20, 38, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.admin-toolbar-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px auto;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.admin-toolbar-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.admin-tab {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0.45rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 225, 255, 0.14);
+    color: rgba(216, 232, 239, 0.76);
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 0.83rem;
+    font-weight: 600;
+}
+
+.admin-tab:hover {
+    color: #d8e8ef;
+    border-color: rgba(56, 225, 255, 0.22);
+}
+
+.admin-tab.is-active {
+    color: #051225;
+    background: #38E1FF;
+    border-color: #38E1FF;
+    box-shadow: 0 0 16px rgba(56, 225, 255, 0.28);
+}
+
+.admin-toolbar .form-control,
+.admin-toolbar .form-select {
+    min-height: 40px;
+}
+
+.admin-table-wrap {
+    overflow: hidden;
+    border: 1px solid rgba(56, 225, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(4, 16, 30, 0.82);
+}
+
+.admin-table {
+    margin-bottom: 0;
+    color: #d8e8ef;
+}
+
+.admin-table thead th {
+    border-bottom: 1px solid rgba(56, 225, 255, 0.14);
+    color: rgba(216, 232, 239, 0.62);
+    font-size: 0.77rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: rgba(6, 20, 38, 0.98);
+}
+
+.admin-table td {
+    border-color: rgba(56, 225, 255, 0.1);
+    vertical-align: middle;
+}
+
+.admin-table tbody tr {
+    border-left: 3px solid transparent;
+}
+
+.admin-table tbody tr:hover {
+    border-left-color: #38E1FF;
+}
+
+.admin-table .mono {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.88rem;
+}
+
+.admin-table .muted {
+    color: rgba(216, 232, 239, 0.62);
+}
+
+.admin-empty {
+    padding: 1rem;
+    color: rgba(216, 232, 239, 0.62);
+    font-style: italic;
+}
+
+.admin-kv {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+}
+
+.admin-kv dt {
+    color: rgba(216, 232, 239, 0.62);
+    font-weight: 500;
+}
+
+.admin-kv dd {
+    margin-bottom: 0;
+    color: #edf8fc;
+}
+
+.admin-balance-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.admin-balance-cell {
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(56, 225, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(4, 16, 30, 0.85);
+}
+
+.admin-balance-cell h6 {
+    margin: 0 0 0.4rem;
+    color: rgba(216, 232, 239, 0.62);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.admin-balance-cell strong {
+    font-size: 1.45rem;
+}
+
+.scanner-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 1rem;
+    border: 1px solid rgba(56, 225, 255, 0.24);
+    border-radius: 14px;
+    background: rgba(3, 13, 26, 0.96);
+}
+
+.scanner-panel::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: -2px;
+    height: 1px;
+    background: rgba(56, 225, 255, 0.6);
+    box-shadow: 0 0 10px rgba(56, 225, 255, 0.18);
+    animation: admin-scan 5s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes admin-scan {
+    0% {
+        transform: translateY(0);
+        opacity: 0.25;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(100%);
+        opacity: 0.25;
+    }
+}
+
+.scanner-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.scanner-card {
+    padding: 0.75rem;
+    border: 1px solid rgba(56, 225, 255, 0.16);
+    border-radius: 12px;
+    background: rgba(7, 20, 38, 0.92);
+}
+
+.scanner-card label {
+    display: block;
+    margin-bottom: 0.55rem;
+    color: rgba(216, 232, 239, 0.62);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.scanner-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 225, 255, 0.16);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.scanner-card .sn-hologram img {
+    aspect-ratio: 1 / 1;
+}
+
+.admin-actions {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.admin-action-btn {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.admin-action-btn.is-verify {
+    color: #dffaf5;
+    background: #1f8a7c;
+    border-color: #2aa194;
+}
+
+.admin-action-btn.is-request {
+    color: #e7fbff;
+    background: #187f93;
+    border-color: #38E1FF;
+}
+
+.admin-action-btn.is-disable {
+    color: #fff0ec;
+    background: #a54d3b;
+    border-color: #ff7a59;
+}
+
+.admin-action-btn:hover {
+    filter: brightness(1.03);
+}
+
+.admin-link-btn {
+    min-height: 40px;
+}
+
+@media (max-width: 991.98px) {
+    .admin-stat-grid,
+    .admin-toolbar-grid,
+    .admin-balance-strip,
+    .scanner-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-toolbar {
+        top: 68px;
+    }
+
+    .admin-kv {
+        grid-template-columns: 1fr;
+    }
+}

@@ -4,65 +4,139 @@ requireAdmin();
 
 $db = getDB();
 
-$pendingCount  = $db->query("SELECT COUNT(*) FROM users WHERE status = 'pending'")->fetchColumn();
+$pendingCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'pending' AND role = 'user'")->fetchColumn();
 $verifiedCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'verified' AND role = 'user'")->fetchColumn();
-$waitingCount  = $db->query("SELECT COUNT(*) FROM users WHERE status = 'waiting_for_updates'")->fetchColumn();
-$disabledCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'disabled'")->fetchColumn();
+$waitingCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'waiting_for_updates' AND role = 'user'")->fetchColumn();
+$disabledCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'disabled' AND role = 'user'")->fetchColumn();
+$pendingTxnCount = $db->query("SELECT COUNT(*) FROM transactions WHERE status = 'pending'")->fetchColumn();
 
 $pageTitle = 'Admin Dashboard';
+$pageStyles = ['admin.css'];
 require_once __DIR__ . '/../includes/header.php';
+
+$stats = [
+    [
+        'label' => 'Pending Verification',
+        'value' => $pendingCount,
+        'icon' => 'bi-hourglass-split',
+        'chip' => 'is-pending',
+        'url' => BASE_URL . '/admin/accounts.php?status=pending',
+    ],
+    [
+        'label' => 'Verified',
+        'value' => $verifiedCount,
+        'icon' => 'bi-patch-check-fill',
+        'chip' => 'is-verified',
+        'url' => BASE_URL . '/admin/accounts.php?status=verified',
+    ],
+    [
+        'label' => 'Waiting for Updates',
+        'value' => $waitingCount,
+        'icon' => 'bi-pencil-square',
+        'chip' => 'is-waiting',
+        'url' => BASE_URL . '/admin/accounts.php?status=waiting_for_updates',
+    ],
+    [
+        'label' => 'Disabled',
+        'value' => $disabledCount,
+        'icon' => 'bi-slash-circle',
+        'chip' => 'is-disabled',
+        'url' => BASE_URL . '/admin/accounts.php?status=disabled',
+    ],
+];
 ?>
 
-<h3 class="mb-4"><i class="bi bi-speedometer2"></i> Admin Dashboard</h3>
+<div class="admin-shell">
+    <div class="admin-heading">
+        <div>
+            <h3><i class="bi bi-speedometer2"></i> Admin Dashboard</h3>
+            <p>Dense operational overview for account review and transaction queue management.</p>
+        </div>
+    </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=pending" class="card text-decoration-none h-100 border-warning">
-            <div class="card-body text-center">
-                <i class="bi bi-hourglass-split text-warning" style="font-size: 2rem;"></i>
-                <h6 class="text-muted mt-2">Pending Verification</h6>
-                <h3 class="fw-bold"><?= (int)$pendingCount ?></h3>
-            </div>
-        </a>
+    <div class="admin-stat-grid">
+        <?php foreach ($stats as $stat): ?>
+            <a href="<?= $stat['url'] ?>" class="admin-stat-card text-decoration-none">
+                <div class="admin-stat-top">
+                    <span class="admin-stat-label"><?= sanitize($stat['label']) ?></span>
+                    <span class="admin-chip <?= $stat['chip'] ?>">
+                        <i class="bi <?= $stat['icon'] ?>"></i>
+                    </span>
+                </div>
+                <div class="admin-stat-value"><?= (int)$stat['value'] ?></div>
+            </a>
+        <?php endforeach; ?>
     </div>
-    <div class="col-md-3 col-6">
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=verified" class="card text-decoration-none h-100 border-success">
-            <div class="card-body text-center">
-                <i class="bi bi-patch-check-fill text-success" style="font-size: 2rem;"></i>
-                <h6 class="text-muted mt-2">Verified</h6>
-                <h3 class="fw-bold"><?= (int)$verifiedCount ?></h3>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-6">
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=waiting_for_updates" class="card text-decoration-none h-100 border-info">
-            <div class="card-body text-center">
-                <i class="bi bi-pencil-square text-info" style="font-size: 2rem;"></i>
-                <h6 class="text-muted mt-2">Waiting for Updates</h6>
-                <h3 class="fw-bold"><?= (int)$waitingCount ?></h3>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-6">
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=disabled" class="card text-decoration-none h-100 border-secondary">
-            <div class="card-body text-center">
-                <i class="bi bi-slash-circle text-secondary" style="font-size: 2rem;"></i>
-                <h6 class="text-muted mt-2">Disabled</h6>
-                <h3 class="fw-bold"><?= (int)$disabledCount ?></h3>
-            </div>
-        </a>
-    </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">Quick Links</h5>
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=pending" class="btn btn-warning">
-            <i class="bi bi-hourglass-split"></i> Review Pending Accounts
-        </a>
-        <a href="<?= BASE_URL ?>/admin/accounts.php" class="btn btn-outline-secondary">
-            <i class="bi bi-people"></i> All Accounts
-        </a>
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-header">
+                    <h5>Review Queue</h5>
+                </div>
+                <div class="admin-panel-body">
+                    <div class="admin-table-wrap">
+                        <table class="table admin-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Queue</th>
+                                    <th>Scope</th>
+                                    <th>Count</th>
+                                    <th class="text-end">Open</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold">Account Verification</td>
+                                    <td class="muted">Users waiting for manual approval</td>
+                                    <td class="mono"><?= (int)$pendingCount ?></td>
+                                    <td class="text-end">
+                                        <a href="<?= BASE_URL ?>/admin/accounts.php?status=pending" class="btn btn-sm btn-outline-secondary sn-btn-ghost admin-link-btn">
+                                            Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Requested Updates</td>
+                                    <td class="muted">Users asked to re-submit identity data</td>
+                                    <td class="mono"><?= (int)$waitingCount ?></td>
+                                    <td class="text-end">
+                                        <a href="<?= BASE_URL ?>/admin/accounts.php?status=waiting_for_updates" class="btn btn-sm btn-outline-secondary sn-btn-ghost admin-link-btn">
+                                            Inspect
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">Pending Transactions</td>
+                                    <td class="muted">Transactions still awaiting admin review</td>
+                                    <td class="mono"><?= (int)$pendingTxnCount ?></td>
+                                    <td class="text-end">
+                                        <a href="<?= BASE_URL ?>/admin/pending_transactions.php" class="btn btn-sm btn-outline-secondary sn-btn-ghost admin-link-btn">
+                                            Open Queue
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-header">
+                    <h5>Quick Access</h5>
+                </div>
+                <div class="admin-panel-body">
+                    <div class="admin-actions">
+                        <a href="<?= BASE_URL ?>/admin/accounts.php" class="btn btn-outline-secondary sn-btn-ghost admin-link-btn">All Accounts</a>
+                        <a href="<?= BASE_URL ?>/admin/accounts.php?status=verified" class="btn btn-outline-secondary sn-btn-ghost admin-link-btn">Verified Accounts</a>
+                        <a href="<?= BASE_URL ?>/admin/pending_transactions.php" class="btn btn-outline-secondary sn-btn-ghost admin-link-btn">Pending Transactions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

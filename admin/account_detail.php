@@ -10,11 +10,9 @@ if ($userId <= 0) {
     redirect(BASE_URL . '/admin/accounts.php');
 }
 
-// Handle action POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // Load current account
     $stmt = $db->prepare("SELECT id, role, status FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $target = $stmt->fetch();
@@ -40,8 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect(BASE_URL . '/admin/account_detail.php?id=' . $userId);
 }
 
-// Load account info for display — exclude BLOB data columns (only mime needed
-// to know if an image exists; the bytes themselves are streamed via image.php).
 $stmt = $db->prepare("
     SELECT id, phone_number, email, full_name, date_of_birth, address,
            balance, role, status, first_login,
@@ -60,151 +56,162 @@ if (!$account) {
 }
 
 $statusLabels = [
-    'pending'             => ['label' => 'Pending Verification', 'color' => 'warning'],
-    'verified'            => ['label' => 'Verified',             'color' => 'success'],
-    'waiting_for_updates' => ['label' => 'Waiting for Updates',  'color' => 'info'],
-    'disabled'            => ['label' => 'Disabled',             'color' => 'secondary'],
+    'pending' => ['label' => 'Pending Verification', 'class' => 'is-pending'],
+    'verified' => ['label' => 'Verified', 'class' => 'is-verified'],
+    'waiting_for_updates' => ['label' => 'Waiting for Updates', 'class' => 'is-waiting'],
+    'disabled' => ['label' => 'Disabled', 'class' => 'is-disabled'],
 ];
-$s = $statusLabels[$account['status']] ?? ['label' => ucfirst($account['status']), 'color' => 'secondary'];
+$s = $statusLabels[$account['status']] ?? ['label' => ucfirst($account['status']), 'class' => 'is-info'];
 
 $pageTitle = 'Account #' . $account['id'];
+$pageStyles = ['admin.css'];
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0"><i class="bi bi-person-vcard"></i> Account Details</h3>
-    <a href="<?= BASE_URL ?>/admin/accounts.php?status=<?= sanitize($account['status']) ?>" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Back
-    </a>
-</div>
-
-<div class="row">
-    <div class="col-lg-7">
-        <!-- Status + Balance -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-6 border-end">
-                        <h6 class="text-muted mb-1">Status</h6>
-                        <span class="badge bg-<?= $s['color'] ?> fs-6"><?= $s['label'] ?></span>
-                    </div>
-                    <div class="col-6">
-                        <h6 class="text-muted mb-1">Balance</h6>
-                        <h4 class="text-primary fw-bold mb-0"><?= formatMoney($account['balance']) ?></h4>
-                    </div>
-                </div>
-            </div>
+<div class="admin-shell">
+    <div class="admin-heading">
+        <div>
+            <h3><i class="bi bi-person-vcard"></i> Account Detail</h3>
+            <p>Manual review view for identity data, account state, and admin decisions.</p>
         </div>
-
-        <!-- Registration details -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Registration Information</h5>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-muted fw-normal">Account ID</dt>
-                    <dd class="col-sm-8">#<?= (int)$account['id'] ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Full Name</dt>
-                    <dd class="col-sm-8"><?= sanitize($account['full_name']) ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Date of Birth</dt>
-                    <dd class="col-sm-8"><?= sanitize(date('d/m/Y', strtotime($account['date_of_birth']))) ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Phone Number</dt>
-                    <dd class="col-sm-8"><?= sanitize($account['phone_number']) ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Email</dt>
-                    <dd class="col-sm-8"><?= sanitize($account['email']) ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Address</dt>
-                    <dd class="col-sm-8"><?= sanitize($account['address']) ?></dd>
-
-                    <dt class="col-sm-4 text-muted fw-normal">Registered</dt>
-                    <dd class="col-sm-8"><?= sanitize(date('d/m/Y H:i', strtotime($account['created_at']))) ?></dd>
-                </dl>
-            </div>
-        </div>
+        <a href="<?= BASE_URL ?>/admin/accounts.php?status=<?= sanitize($account['status']) ?>" class="btn btn-outline-secondary sn-btn-ghost btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to Queue
+        </a>
     </div>
 
-    <div class="col-lg-5">
-        <!-- ID Card -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-card-image"></i> ID Card</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="text-muted small mb-1">Front</label>
-                    <?php if (!empty($account['id_card_front_mime'])): ?>
-                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front" target="_blank">
-                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front"
-                                 alt="ID Front" class="img-fluid rounded border">
-                        </a>
-                    <?php else: ?>
-                        <div class="text-muted fst-italic">Not uploaded</div>
-                    <?php endif; ?>
-                </div>
-                <div>
-                    <label class="text-muted small mb-1">Back</label>
-                    <?php if (!empty($account['id_card_back_mime'])): ?>
-                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back" target="_blank">
-                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back"
-                                 alt="ID Back" class="img-fluid rounded border">
-                        </a>
-                    <?php else: ?>
-                        <div class="text-muted fst-italic">Not uploaded</div>
-                    <?php endif; ?>
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-body">
+                    <div class="admin-balance-strip">
+                        <div class="admin-balance-cell">
+                            <h6>Status</h6>
+                            <span class="admin-chip sn-chip <?= $s['class'] ?> <?= $account['status'] === 'verified' ? 'sn-chip--verified' : ($account['status'] === 'pending' ? 'sn-chip--pending' : 'sn-chip--warn') ?>"><?= sanitize($s['label']) ?></span>
+                        </div>
+                        <div class="admin-balance-cell">
+                            <h6>Balance</h6>
+                            <strong><?= formatMoney($account['balance']) ?></strong>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-header">
+                    <h5>Registration Information</h5>
+                </div>
+                <div class="admin-panel-body">
+                    <dl class="admin-kv">
+                        <dt>Account ID</dt>
+                        <dd class="mono">#<?= (int)$account['id'] ?></dd>
+
+                        <dt>Full Name</dt>
+                        <dd><?= sanitize($account['full_name']) ?></dd>
+
+                        <dt>Date of Birth</dt>
+                        <dd><?= sanitize(date('d/m/Y', strtotime($account['date_of_birth']))) ?></dd>
+
+                        <dt>Phone Number</dt>
+                        <dd class="mono"><?= sanitize($account['phone_number']) ?></dd>
+
+                        <dt>Email</dt>
+                        <dd><?= sanitize($account['email']) ?></dd>
+
+                        <dt>Address</dt>
+                        <dd><?= sanitize($account['address']) ?></dd>
+
+                        <dt>Registered</dt>
+                        <dd class="mono"><?= sanitize(date('d/m/Y H:i', strtotime($account['created_at']))) ?></dd>
+
+                        <dt>Last Updated</dt>
+                        <dd class="mono"><?= sanitize(date('d/m/Y H:i', strtotime($account['updated_at']))) ?></dd>
+
+                        <dt>Failed Login Attempts</dt>
+                        <dd class="mono"><?= (int)$account['failed_login_attempts'] ?></dd>
+
+                        <dt>Abnormal Login Flag</dt>
+                        <dd><?= $account['has_abnormal_login'] ? 'Yes' : 'No' ?></dd>
+
+                        <dt>Temporary Lock Until</dt>
+                        <dd><?= $account['locked_until'] ? sanitize(date('d/m/Y H:i', strtotime($account['locked_until']))) : 'Not locked' ?></dd>
+
+                        <dt>Permanent Lock</dt>
+                        <dd><?= $account['permanently_locked'] ? 'Yes' : 'No' ?></dd>
+                    </dl>
+                </div>
+            </div>
         </div>
 
-        <!-- Admin actions -->
-        <?php if (in_array($account['status'], ['pending', 'waiting_for_updates'], true)): ?>
-        <div class="card shadow-sm border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Admin Actions</h5>
-            </div>
-            <div class="card-body d-grid gap-2">
-                <form method="POST" onsubmit="return confirm('Verify this account?');">
-                    <input type="hidden" name="action" value="verify">
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-patch-check"></i> Verify
-                    </button>
-                </form>
+        <div class="col-lg-5">
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-header">
+                    <h5>ID Scanner Window</h5>
+                </div>
+                <div class="admin-panel-body">
+                    <div class="scanner-panel">
+                        <div class="scanner-grid">
+                            <div class="scanner-card">
+                                <label>Front</label>
+                                <?php if (!empty($account['id_card_front_mime'])): ?>
+                                    <div class="sn-hologram">
+                                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front" target="_blank">
+                                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=front"
+                                                 alt="ID Front">
+                                        </a>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="admin-empty">Not uploaded</div>
+                                <?php endif; ?>
+                            </div>
 
-                <form method="POST" onsubmit="return confirm('Disable this account? The user will no longer be able to log in.');">
-                    <input type="hidden" name="action" value="cancel">
-                    <button type="submit" class="btn btn-danger w-100">
-                        <i class="bi bi-x-circle"></i> Cancel (Disable Account)
-                    </button>
-                </form>
+                            <div class="scanner-card">
+                                <label>Back</label>
+                                <?php if (!empty($account['id_card_back_mime'])): ?>
+                                    <div class="sn-hologram">
+                                        <a href="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back" target="_blank">
+                                            <img src="<?= BASE_URL ?>/image.php?user_id=<?= (int)$account['id'] ?>&side=back"
+                                                 alt="ID Back">
+                                        </a>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="admin-empty">Not uploaded</div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <form method="POST" onsubmit="return confirm('Request the user to re-upload their ID card?');">
-                    <input type="hidden" name="action" value="request_update">
-                    <button type="submit" class="btn btn-info w-100 text-white">
-                        <i class="bi bi-pencil-square"></i> Request Additional Information
-                    </button>
-                </form>
+            <div class="admin-panel sn-card">
+                <div class="admin-panel-header">
+                    <h5>Admin Actions</h5>
+                </div>
+                <div class="admin-panel-body">
+                    <div class="admin-actions">
+                        <form method="POST" onsubmit="return confirm('Verify this account?');">
+                            <input type="hidden" name="action" value="verify">
+                            <button type="submit" class="btn admin-action-btn is-verify">
+                                <i class="bi bi-patch-check"></i> Verify
+                            </button>
+                        </form>
+
+                        <form method="POST" onsubmit="return confirm('Request the user to re-upload their ID card?');">
+                            <input type="hidden" name="action" value="request_update">
+                            <button type="submit" class="btn admin-action-btn is-request">
+                                <i class="bi bi-pencil-square"></i> Request Update
+                            </button>
+                        </form>
+
+                        <form method="POST" onsubmit="return confirm('Disable this account? The user will no longer be able to log in.');">
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn admin-action-btn is-disable">
+                                <i class="bi bi-x-circle"></i> Disable
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-        <?php elseif ($account['status'] === 'verified'): ?>
-        <div class="card shadow-sm">
-            <div class="card-body d-grid">
-                <form method="POST" onsubmit="return confirm('Disable this account?');">
-                    <input type="hidden" name="action" value="cancel">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-x-circle"></i> Disable Account
-                    </button>
-                </form>
-            </div>
-        </div>
-        <?php elseif ($account['status'] === 'disabled'): ?>
-        <div class="alert alert-secondary mb-0">
-            This account is disabled.
-        </div>
-        <?php endif; ?>
     </div>
 </div>
 
