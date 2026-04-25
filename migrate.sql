@@ -211,6 +211,17 @@ CREATE TABLE IF NOT EXISTS email_queue (
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
+-- Persistent DB-backed PHP sessions
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS app_sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    session_data MEDIUMBLOB NOT NULL,
+    expires_at DATETIME NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
 -- Supporting indexes
 -- -----------------------------------------------------
 
@@ -230,6 +241,7 @@ CALL add_index_if_missing('notifications', 'idx_notif_type', '(`notification_typ
 CALL add_index_if_missing('notifications', 'idx_notif_user_read_created', '(`user_id`, `is_read`, `created_at`)');
 CALL add_index_if_missing('notifications', 'idx_notif_broadcast_created', '(`is_broadcast`, `broadcast_key`, `created_at`)');
 CALL add_index_if_missing('email_queue', 'idx_email_queue_ready', '(`status`, `available_at`, `attempts`, `created_at`)');
+CALL add_index_if_missing('app_sessions', 'idx_app_sessions_expires', '(`expires_at`)');
 
 -- -----------------------------------------------------
 -- Cleanup helper procedures

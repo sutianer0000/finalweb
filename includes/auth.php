@@ -1,6 +1,134 @@
 <?php
-session_start();
 require_once __DIR__ . '/../config/database.php';
+
+function configureSession() {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+
+    $secureCookie = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $lifetime = (int) (getenv('SESSION_LIFETIME') ?: 28800);
+
+    ini_set('session.gc_maxlifetime', (string) $lifetime);
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+
+    session_set_cookie_params([
+        'lifetime' => $lifetime,
+        'path' => '/',
+        'secure' => $secureCookie,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
+    session_set_save_handler(new DatabaseSessionHandler($lifetime), true);
+    session_start();
+}
+
+class DatabaseSessionHandler implements SessionHandlerInterface
+{
+    private int $lifetime;
+    private bool $tableChecked = false;
+
+    public function __construct(int $lifetime)
+    {
+        $this->lifetime = $lifetime;
+    }
+
+    public function open(string $path, string $name): bool
+    {
+        return true;
+    }
+
+    public function close(): bool
+    {
+        return true;
+    }
+
+    public function read(string $id): string
+    {
+        try {
+            $this->ensureTable();
+            $stmt = getDB()->prepare("
+                SELECT session_data
+                FROM app_sessions
+                WHERE id = ? AND expires_at > NOW()
+                LIMIT 1
+            ");
+            $stmt->execute([$id]);
+            $data = $stmt->fetchColumn();
+            return $data === false ? '' : (string) $data;
+        } catch (Throwable $e) {
+            error_log('[session] read failed: ' . $e->getMessage());
+            return '';
+        }
+    }
+
+    public function write(string $id, string $data): bool
+    {
+        try {
+            $this->ensureTable();
+            $expiresAt = date('Y-m-d H:i:s', time() + $this->lifetime);
+            $stmt = getDB()->prepare("
+                INSERT INTO app_sessions (id, session_data, expires_at, updated_at)
+                VALUES (?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE
+                    session_data = VALUES(session_data),
+                    expires_at = VALUES(expires_at),
+                    updated_at = NOW()
+            ");
+            return $stmt->execute([$id, $data, $expiresAt]);
+        } catch (Throwable $e) {
+            error_log('[session] write failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function destroy(string $id): bool
+    {
+        try {
+            $this->ensureTable();
+            $stmt = getDB()->prepare("DELETE FROM app_sessions WHERE id = ?");
+            return $stmt->execute([$id]);
+        } catch (Throwable $e) {
+            error_log('[session] destroy failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function gc(int $max_lifetime): int|false
+    {
+        try {
+            $this->ensureTable();
+            return getDB()->exec("DELETE FROM app_sessions WHERE expires_at <= NOW()");
+        } catch (Throwable $e) {
+            error_log('[session] gc failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function ensureTable(): void
+    {
+        if ($this->tableChecked) {
+            return;
+        }
+
+        getDB()->exec("
+            CREATE TABLE IF NOT EXISTS app_sessions (
+                id VARCHAR(128) PRIMARY KEY,
+                session_data MEDIUMBLOB NOT NULL,
+                expires_at DATETIME NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_app_sessions_expires (expires_at)
+            ) ENGINE=InnoDB
+        ");
+
+        $this->tableChecked = true;
+    }
+}
+
+configureSession();
 
 // Base URL prefix — empty on Railway (app at /), "/finalweb" for local XAMPP.
 // Set via BASE_URL env var (config/local.php for local, Railway dashboard for prod).
@@ -40,12 +168,10 @@ function getCurrentUser() {
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch();
 
-    // Session points to a user that no longer exists (e.g. DB was re-imported
-    // while the browser still had the cookie). Wipe the session and force a
-    // fresh login instead of letting callers dereference `false`.
+    // Session points to a user that no longer exists. Do not destroy the whole
+    // browser session here; just remove the invalid login marker.
     if ($user === false) {
-        session_unset();
-        session_destroy();
+        unset($_SESSION['user_id'], $_SESSION['header_notifications']);
         $cachedUser = null;
         return null;
     }

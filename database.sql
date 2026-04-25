@@ -187,6 +187,16 @@ CREATE TABLE email_queue (
 ) ENGINE=InnoDB;
 
 -- =====================================================
+-- APP SESSIONS TABLE (persistent login sessions)
+-- =====================================================
+CREATE TABLE app_sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    session_data MEDIUMBLOB NOT NULL,
+    expires_at DATETIME NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- LOGIN HISTORY TABLE (for tracking abnormal logins)
 -- =====================================================
 CREATE TABLE login_history (
@@ -243,3 +253,4 @@ CREATE INDEX idx_notif_type ON notifications(notification_type);
 CREATE INDEX idx_notif_user_read_created ON notifications(user_id, is_read, created_at);
 CREATE INDEX idx_notif_broadcast_created ON notifications(is_broadcast, broadcast_key, created_at);
 CREATE INDEX idx_email_queue_ready ON email_queue(status, available_at, attempts, created_at);
+CREATE INDEX idx_app_sessions_expires ON app_sessions(expires_at);

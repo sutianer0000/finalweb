@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ->execute([$user['id'], $_SERVER['REMOTE_ADDR'] ?? '']);
 
                     // Set session
+                    session_regenerate_id(true);
                     $_SESSION['user_id'] = $user['id'];
 
                     // Redirect based on role and first_login
