@@ -1,0 +1,65 @@
+.profile-record {
+    color: #dbeef5;
+}
+
+.profile-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.profile-eyebrow {
+    margin-bottom: 0.35rem;
+    color: rgba(219, 238, 245, 0.55);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.profile-heading h3 {
+    font-family: "Orbitron", sans-serif;
+    color: #eefcff;
+}
+
+.profile-heading p {
+    margin-top: 0.35rem;
+    color: rgba(219, 238, 245, 0.7);
+}
+
+.profile-panel .card-header {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-bottom: 1px solid rgba(56, 225, 255, 0.12);
+    color: #eefcff;
+}
+
+.profile-balance-cell {
+    border-right: 1px solid rgba(56, 225, 255, 0.14);
+}
+
+.profile-balance-value {
+    font-size: clamp(1.75rem, 4vw, 2.4rem);
+}
+
+.profile-alert {
+    border-radius: 14px;
+}
+
+.sn-hologram img {
+    aspect-ratio: 1.35 / 1;
+}
+
+@media (max-width: 767.98px) {
+    .profile-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-balance-cell {
+        border-right: 0;
+        border-bottom: 1px solid rgba(56, 225, 255, 0.14);
+        padding-bottom: 1rem;
+    }
+}

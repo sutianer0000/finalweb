@@ -118,15 +118,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title><?= __("login_title") ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/common.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/login.css" rel="stylesheet">
 </head>
 
 <body>
 
     <div class="container mt-5">
-        <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="container d-flex justify-content-center align-items-center login-shell">
 
-            <div class="card login-card sn-login-card" style="max-width: 420px; width: 100%;">
+            <div class="card login-card sn-login-card">
 
                 <!-- HEADER -->
                 <div class="card-header text-white text-center py-4">

@@ -1,5 +1,6 @@
 <?php
 if (!isset($pageTitle)) $pageTitle = 'E-Wallet';
+$pageStyles = $pageStyles ?? [];
 $currentUser = isLoggedIn() ? getCurrentUser() : null;
 $flash = getFlash();
 ?>
@@ -13,7 +14,12 @@ $flash = getFlash();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/common.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/header-footer.css" rel="stylesheet">
+    <?php foreach ($pageStyles as $style): ?>
+        <link href="<?= BASE_URL ?>/assets/css/<?= sanitize($style) ?>" rel="stylesheet">
+    <?php endforeach; ?>
 </head>
 <body>
     <!-- Navbar -->

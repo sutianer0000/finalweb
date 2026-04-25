@@ -12,7 +12,6 @@ $translations = [
         'already_have_account' => 'Đã có tài khoản?',
         'login_here' => 'Đăng nhập tại đây',
 
-        // Form labels
         'phone_number' => 'Số điện thoại',
         'email_address' => 'Địa chỉ email',
         'full_name' => 'Họ và tên',
@@ -22,19 +21,17 @@ $translations = [
         'id_card_back' => 'Ảnh mặt sau CMND/CCCD',
         'register' => 'Đăng ký',
 
-        // Placeholders & help text
         'phone_placeholder' => 'Ví dụ: 0901234567',
         'email_placeholder' => 'Ví dụ: user@example.com',
         'full_name_placeholder' => 'Ví dụ: Nguyễn Văn A',
         'address_placeholder' => 'Nhập địa chỉ đầy đủ của bạn',
-        'front_help' => 'Tối đa 3 MB. Mọi kích thước đều được — hệ thống tự cắt thành hình vuông ở giữa.',
-        'back_help' => 'Tối đa 3 MB. Mọi kích thước đều được — hệ thống tự cắt thành hình vuông ở giữa.',
+        'front_help' => 'Tối đa 3 MB. Mọi kích thước đều được, hệ thống sẽ tự cắt về hình vuông.',
+        'back_help' => 'Tối đa 3 MB. Mọi kích thước đều được, hệ thống sẽ tự cắt về hình vuông.',
 
         'phone_required' => 'Số điện thoại là bắt buộc.',
         'phone_format' => 'Số điện thoại phải từ 9-15 chữ số.',
         'phone_exists' => 'Số điện thoại này đã được đăng ký.',
 
-        // Login page
         'login_title' => 'Đăng nhập - Ví Điện Tử',
         'e_wallet' => 'Ví Điện Tử',
         'sign_in_to_continue' => 'Đăng nhập để tiếp tục',
@@ -48,14 +45,60 @@ $translations = [
         'dont_have_account' => 'Chưa có tài khoản?',
         'register_here' => 'Đăng ký ngay',
 
-        // Errors
         'please_enter_both' => 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.',
         'invalid_username_or_password' => 'Tên đăng nhập hoặc mật khẩu không đúng.',
         'account_disabled' => 'Tài khoản đã bị vô hiệu hóa, vui lòng liên hệ hotline 18001008.',
-        'account_permanently_locked' => 'Tài khoản đã bị khóa vĩnh viễn do nhập sai mật khẩu nhiều lần. Vui lòng liên hệ quản trị viên.',
+        'account_permanently_locked' => 'Tài khoản đã bị khóa do nhập sai mật khẩu nhiều lần, vui lòng liên hệ quản trị viên.',
         'account_temporarily_locked' => 'Tài khoản đang bị tạm khóa, vui lòng thử lại sau 1 phút.',
-    ],
 
+        'dashboard_title' => 'Bảng điều khiển',
+        'command_deck' => 'Bảng điều khiển',
+        'welcome_user' => 'Chào mừng, %s!',
+        'dashboard_intro' => 'Thông tin tài khoản và thao tác nhanh đã sẵn sàng bên dưới.',
+        'dashboard_pending_notice' => 'Tài khoản của bạn đang <strong>chờ xác minh</strong>. Hầu hết tính năng chỉ khả dụng cho tài khoản đã xác minh.',
+        'dashboard_update_notice' => 'Quản trị viên đã yêu cầu bổ sung thông tin.',
+        'reupload_id_here' => 'Tải lại ảnh CMND/CCCD tại đây',
+        'account_balance' => 'Số dư tài khoản',
+        'account_status' => 'Trạng thái tài khoản',
+        'profile' => 'Hồ sơ',
+        'security' => 'Bảo mật',
+        'quick_actions' => 'Thao tác nhanh',
+        'deposit' => 'Nạp tiền',
+        'withdraw' => 'Rút tiền',
+        'transfer' => 'Chuyển tiền',
+        'phone_card' => 'Thẻ điện thoại',
+        'locked' => 'Khóa',
+        'recent_activity' => 'Hoạt động gần đây',
+        'sonar_log' => 'Nhật ký sonar của các biến động tài khoản gần nhất.',
+        'no_activity' => 'Chưa có hoạt động nào. Các giao dịch mới nhất sẽ xuất hiện tại đây.',
+        'account_details' => 'Chi tiết tài khoản',
+        'feature_verified_only' => 'Tính năng này chỉ khả dụng cho tài khoản đã xác minh.',
+        'transfer_out' => 'Chuyển đi',
+        'transfer_in' => 'Nhận tiền',
+        'verified' => 'Đã xác minh',
+        'pending_verification' => 'Chờ xác minh',
+        'waiting_for_updates' => 'Chờ cập nhật',
+        'disabled' => 'Đã vô hiệu hóa',
+
+        'personal_information' => 'Thông tin cá nhân',
+        'back_to_dashboard' => 'Quay lại bảng điều khiển',
+        'profile_pending_notice' => 'Tài khoản của bạn đang chờ xác minh. Hầu hết tính năng ví sẽ bị hạn chế cho đến khi quản trị viên xác minh.',
+        'profile_update_notice' => 'Quản trị viên đã yêu cầu bạn cập nhật thông tin.',
+        'profile_disabled_notice' => 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ.',
+        'basic_information' => 'Thông tin cơ bản',
+        'account_id' => 'Mã tài khoản',
+        'role' => 'Vai trò',
+        'member_since' => 'Tham gia từ',
+        'last_updated' => 'Cập nhật lần cuối',
+        'id_card' => 'CMND/CCCD',
+        'front' => 'Mặt trước',
+        'back' => 'Mặt sau',
+        'not_uploaded' => 'Chưa tải lên',
+        'no_id_uploaded' => 'Chưa có ảnh CMND/CCCD được tải lên.',
+        'change_password' => 'Đổi mật khẩu',
+        'transaction_history' => 'Lịch sử giao dịch',
+        'user' => 'Người dùng',
+    ],
     'en' => [
         'page_title' => 'Register',
         'create_account' => 'Create an Account',
@@ -81,10 +124,9 @@ $translations = [
         'email_placeholder' => 'e.g. user@example.com',
         'full_name_placeholder' => 'e.g. Nguyen Van A',
         'address_placeholder' => 'Enter your full address',
-        'front_help' => 'Max 3 MB. Any size — we center-crop to a square automatically.',
-        'back_help' => 'Max 3 MB. Any size — we center-crop to a square automatically.',
+        'front_help' => 'Max 3 MB. Any size, we center-crop to a square automatically.',
+        'back_help' => 'Max 3 MB. Any size, we center-crop to a square automatically.',
 
-        // Login page
         'login_title' => 'Login - E-Wallet',
         'e_wallet' => 'E-Wallet',
         'sign_in_to_continue' => 'Sign in to continue',
@@ -98,22 +140,67 @@ $translations = [
         'dont_have_account' => "Don't have an account?",
         'register_here' => 'Register here',
 
-        // Errors
         'please_enter_both' => 'Please enter both username and password.',
         'invalid_username_or_password' => 'Invalid username or password.',
         'account_disabled' => 'This account has been disabled, please contact the hotline 18001008.',
         'account_permanently_locked' => 'Account has been locked due to entering the wrong password many times, please contact the administrator.',
         'account_temporarily_locked' => 'Account is currently locked, please try again in 1 minute.',
-    ]
+
+        'dashboard_title' => 'Dashboard',
+        'command_deck' => 'Command Deck',
+        'welcome_user' => 'Welcome, %s!',
+        'dashboard_intro' => 'Live account telemetry and quick actions are ready below.',
+        'dashboard_pending_notice' => 'Your account is <strong>pending verification</strong>. Most features are only available for verified accounts.',
+        'dashboard_update_notice' => 'An admin has requested additional information.',
+        'reupload_id_here' => 'Re-upload your ID card photos here',
+        'account_balance' => 'Account Balance',
+        'account_status' => 'Account Status',
+        'profile' => 'Profile',
+        'security' => 'Security',
+        'quick_actions' => 'Quick Actions',
+        'deposit' => 'Deposit',
+        'withdraw' => 'Withdraw',
+        'transfer' => 'Transfer',
+        'phone_card' => 'Phone Card',
+        'locked' => 'Locked',
+        'recent_activity' => 'Recent Activity',
+        'sonar_log' => 'Sonar log of your latest account movement.',
+        'no_activity' => 'No activity detected yet. Your latest transactions will appear here.',
+        'account_details' => 'Account Details',
+        'feature_verified_only' => 'This feature is only available for verified accounts.',
+        'transfer_out' => 'Transfer Out',
+        'transfer_in' => 'Transfer In',
+        'verified' => 'Verified',
+        'pending_verification' => 'Pending Verification',
+        'waiting_for_updates' => 'Waiting for Updates',
+        'disabled' => 'Disabled',
+
+        'personal_information' => 'Personal Information',
+        'back_to_dashboard' => 'Back to Dashboard',
+        'profile_pending_notice' => 'Your account is pending verification. Most wallet features are restricted until an admin verifies your account.',
+        'profile_update_notice' => 'An admin has requested updates to your information.',
+        'profile_disabled_notice' => 'Your account has been disabled. Please contact support.',
+        'basic_information' => 'Basic Information',
+        'account_id' => 'Account ID',
+        'role' => 'Role',
+        'member_since' => 'Member Since',
+        'last_updated' => 'Last Updated',
+        'id_card' => 'ID Card',
+        'front' => 'Front',
+        'back' => 'Back',
+        'not_uploaded' => 'Not uploaded',
+        'no_id_uploaded' => 'No ID card images uploaded.',
+        'change_password' => 'Change Password',
+        'transaction_history' => 'Transaction History',
+        'user' => 'User',
+    ],
 ];
 
-
-// Language selection — persist across pages via session.
-// Session is already started by auth.php.
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['vi', 'en'], true)) {
     $_SESSION['lang'] = $_GET['lang'];
 }
-$lang = $_SESSION['lang'] ?? 'vi'; // default Vietnamese
+
+$lang = $_SESSION['lang'] ?? 'vi';
 
 function __($key) {
     global $translations, $lang;

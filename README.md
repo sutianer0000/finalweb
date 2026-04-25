@@ -151,7 +151,6 @@ finalweb/
 
 ## Working on the frontend
 
-- **Styles**: `assets/css/style.css`
 - **Shared shell** for most pages: `includes/header.php` + `footer.php`
   (Bootstrap 5 + Bootstrap Icons loaded from CDN)
 - **`login.php` is standalone** — it has its own `<!DOCTYPE>` and Bootstrap

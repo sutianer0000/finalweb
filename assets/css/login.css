@@ -1,0 +1,8 @@
+.login-shell {
+    min-height: 80vh;
+}
+
+.login-card {
+    max-width: 420px;
+    width: 100%;
+}

@@ -1,0 +1,51 @@
+.sn-footer {
+    background: rgba(5, 18, 37, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(56, 225, 255, 0.2);
+    color: rgba(242, 246, 250, 0.75);
+}
+
+.sn-footer p {
+    margin: 0;
+    color: rgba(242, 246, 250, 0.85);
+    font-weight: 500;
+}
+
+.sn-footer .footer-subtext {
+    color: rgba(242, 246, 250, 0.5);
+    font-size: 0.85rem;
+}
+
+.sn-footer:hover {
+    border-top: 1px solid rgba(56, 225, 255, 0.4);
+}
+
+.sn-nav {
+    background: rgba(5, 18, 37, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(56, 225, 255, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.sn-nav .navbar-brand {
+    color: #F2F6FA;
+    letter-spacing: 0.02em;
+}
+
+.sn-nav .nav-link {
+    color: rgba(242, 246, 250, 0.75);
+    transition: color 0.2s ease;
+}
+
+.sn-nav .nav-link:hover {
+    color: #F2F6FA;
+}
+
+.sn-nav .nav-link.active {
+    color: #38E1FF;
+    text-shadow: 0 0 8px rgba(56, 225, 255, 0.5);
+}

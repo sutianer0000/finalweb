@@ -160,11 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Register';
+$pageStyles = ['register.css'];
 require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container d-flex justify-content-center">
-    <div class="card sn-login-card" style="max-width:600px;width:100%;">
+    <div class="card sn-login-card register-card">
         <!-- HEADER -->
         <div class="card-header text-white text-center py-4">
             <i class="bi bi-person-plus fs-1 mb-2"></i>
