@@ -65,95 +65,10 @@ function sendMailNow(string $toEmail, string $toName, string $subject, string $h
     }
 }
 
-function queueMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
+function sendMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
 {
-    try {
-        $stmt = getDB()->prepare("
-            INSERT INTO email_queue (to_email, to_name, subject, html_body, alt_body)
-            VALUES (?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $toEmail,
-            $toName,
-            $subject,
-            $htmlBody,
-            $altBody !== '' ? $altBody : strip_tags($htmlBody),
-        ]);
-
-        return ['ok' => true, 'queued' => true, 'error' => null, 'queue_id' => (int) getDB()->lastInsertId()];
-    } catch (Exception $e) {
-        error_log('[mailer] queue failed: ' . $e->getMessage());
-        return ['ok' => false, 'queued' => false, 'error' => $e->getMessage()];
-    }
-}
-
-function sendMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = '', bool $queue = false): array
-{
-    if ($queue) {
-        return queueMail($toEmail, $toName, $subject, $htmlBody, $altBody);
-    }
-
     $result = sendMailNow($toEmail, $toName, $subject, $htmlBody, $altBody);
-    $result['queued'] = false;
     return $result;
-}
-
-function processQueuedEmails(int $limit = 20, int $maxAttempts = 5): array
-{
-    $db = getDB();
-    $limit = max(1, min(100, $limit));
-    $maxAttempts = max(1, $maxAttempts);
-
-    $stmt = $db->prepare("
-        SELECT id, to_email, to_name, subject, html_body, alt_body, attempts
-        FROM email_queue
-        WHERE status IN ('pending', 'failed')
-          AND attempts < ?
-          AND available_at <= NOW()
-        ORDER BY created_at ASC
-        LIMIT {$limit}
-    ");
-    $stmt->execute([$maxAttempts]);
-    $emails = $stmt->fetchAll();
-
-    $sent = 0;
-    $failed = 0;
-
-    foreach ($emails as $email) {
-        $attempts = (int) $email['attempts'] + 1;
-        $db->prepare("
-            UPDATE email_queue
-            SET status = 'processing', attempts = ?, updated_at = NOW()
-            WHERE id = ? AND status IN ('pending', 'failed')
-        ")->execute([$attempts, $email['id']]);
-
-        $result = sendMailNow(
-            $email['to_email'],
-            $email['to_name'],
-            $email['subject'],
-            $email['html_body'],
-            $email['alt_body']
-        );
-
-        if ($result['ok']) {
-            $db->prepare("
-                UPDATE email_queue
-                SET status = 'sent', sent_at = NOW(), last_error = NULL, updated_at = NOW()
-                WHERE id = ?
-            ")->execute([$email['id']]);
-            $sent++;
-        } else {
-            $retryAt = date('Y-m-d H:i:s', time() + min(600, max(30, $attempts * 60)));
-            $db->prepare("
-                UPDATE email_queue
-                SET status = 'failed', last_error = ?, available_at = ?, updated_at = NOW()
-                WHERE id = ?
-            ")->execute([$result['error'], $retryAt, $email['id']]);
-            $failed++;
-        }
-    }
-
-    return ['processed' => count($emails), 'sent' => $sent, 'failed' => $failed];
 }
 
 function sendRegistrationEmail(string $toEmail, string $fullName, string $phone, string $password): array
@@ -188,7 +103,7 @@ function sendRegistrationEmail(string $toEmail, string $fullName, string $phone,
          . "Login: " . appUrl('login.php') . "\n\n"
          . "You will be asked to change this password on first login.";
 
-    return sendMail($toEmail, $fullName, $subject, $html, $alt, true);
+    return sendMail($toEmail, $fullName, $subject, $html, $alt);
 }
 function sendPasswordResetOtp(string $toEmail, string $fullName, string $otp): array
 {

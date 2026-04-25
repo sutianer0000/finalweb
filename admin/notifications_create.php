@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $successMsg = "Delivered to {$result['count']} user"
                 . ($result['count'] === 1 ? '' : 's')
-                . ($sendEmail ? " - queued {$result['emailed']}/{$result['count']} email(s)" : ' (in-app only)')
+                . ($sendEmail ? " - emailed {$result['emailed']}/{$result['count']}" : ' (in-app only)')
                 . '.';
             if (!empty($result['email_errors'])) {
                 $successMsg .= ' Email errors: ' . count($result['email_errors']) . '.';
@@ -165,7 +165,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <label class="form-check-label" for="send_email">
                             Also send an email to each recipient
                         </label>
-                        <div class="form-text">Email delivery is queued so the request can finish quickly.</div>
+                        <div class="form-text">Broadcasts to many users may take several seconds.</div>
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end">

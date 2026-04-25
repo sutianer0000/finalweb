@@ -140,7 +140,7 @@ function sendNotification($senderId, array $userIds, $title, $message, $sendEmai
         $recipients = $stmt->fetchAll();
 
         foreach ($recipients as $r) {
-            $result = queueNotificationEmail($r['email'], $r['full_name'], $title, $message, $typeMeta['label']);
+            $result = sendNotificationEmail($r['email'], $r['full_name'], $title, $message, $typeMeta['label']);
             if ($result['ok']) {
                 $emailed++;
             } else {
@@ -450,19 +450,6 @@ function sendNotificationEmail($toEmail, $toName, $title, $message, $typeLabel =
         '[E-Wallet] ' . $title,
         buildNotificationEmailBody($toName, $title, $message, $typeLabel),
         buildNotificationEmailAltBody($toName, $title, $message, $typeLabel)
-    );
-}
-
-function queueNotificationEmail($toEmail, $toName, $title, $message, $typeLabel = 'General') {
-    require_once __DIR__ . '/mailer.php';
-
-    return sendMail(
-        $toEmail,
-        $toName,
-        '[E-Wallet] ' . $title,
-        buildNotificationEmailBody($toName, $title, $message, $typeLabel),
-        buildNotificationEmailAltBody($toName, $title, $message, $typeLabel),
-        true
     );
 }
 

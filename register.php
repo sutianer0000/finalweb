@@ -132,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone' => $phone,
             'password' => $randomPassword,
             'email_sent' => $mailResult['ok'],
-            'email_queued' => !empty($mailResult['queued']),
             'mail_error' => $mailResult['error'],
         ];
     }
@@ -170,8 +169,7 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php else: ?>
                     <div class="alert alert-success">
-                        <i class="bi bi-envelope-check"></i>
-                        <?= $credentials['email_queued'] ? 'Credential email has been queued for delivery.' : __("email_sent_success") ?>
+                        <i class="bi bi-envelope-check"></i> <?= __("email_sent_success") ?>
                     </div>
                 <?php endif; ?>
 
