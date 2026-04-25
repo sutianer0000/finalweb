@@ -1,6 +1,6 @@
 <?php
 // Stream an ID card image from user_id_cards.
-// Access: the owner themselves, or any admin. Everyone else gets 403.
+// Access: the owner themselves, or any admin-level account. Everyone else gets 403.
 //
 // Efficiency plan:
 //   1. Auth check (cheap session read).
@@ -25,7 +25,7 @@ if ($targetUserId <= 0 || !in_array($side, ['front', 'back'], true)) {
 
 $me = getCurrentUser();
 $isOwner = $me && (int) $me['id'] === $targetUserId;
-$isAdmin = $me && $me['role'] === 'admin';
+$isAdmin = $me && in_array($me['role'], ['admin', 'superadmin'], true);
 
 if (!$isOwner && !$isAdmin) {
     http_response_code(403);

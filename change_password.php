@@ -37,6 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            ->execute([$hashed, $user['id']]);
 
         // Keep user logged in — session already holds user_id, nothing to reset.
+        logActivity('user_changed_password', [
+            'target_user_id' => $user['id'],
+            'target_email' => $user['email'],
+            'entity_type' => 'user',
+            'entity_id' => $user['id'],
+        ]);
         setFlash('success', 'Password changed successfully.');
         redirect(BASE_URL . '/dashboard.php');
     }

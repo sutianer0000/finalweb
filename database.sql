@@ -25,7 +25,7 @@ CREATE TABLE users (
     address TEXT NOT NULL,
     password VARCHAR(255) NOT NULL,
     balance DECIMAL(15, 2) DEFAULT 0.00,
-    role ENUM('user', 'admin') DEFAULT 'user',
+    role ENUM('user', 'admin', 'superadmin') DEFAULT 'user',
     -- Account status: pending, verified, disabled, waiting_for_updates
     status ENUM('pending', 'verified', 'disabled', 'waiting_for_updates') DEFAULT 'pending',
     -- First login tracking: user must change password on first login
@@ -168,6 +168,37 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB;
 
 -- =====================================================
+-- APP SESSIONS TABLE (persistent login sessions)
+-- =====================================================
+CREATE TABLE app_sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    session_data MEDIUMBLOB NOT NULL,
+    user_id INT DEFAULT NULL,
+    expires_at DATETIME NOT NULL,
+    last_seen_at DATETIME DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- ACTIVITY LOGS TABLE (superadmin audit trail)
+-- =====================================================
+CREATE TABLE activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    actor_user_id INT DEFAULT NULL,
+    actor_email VARCHAR(255) DEFAULT NULL,
+    actor_role VARCHAR(30) DEFAULT NULL,
+    target_user_id INT DEFAULT NULL,
+    target_email VARCHAR(255) DEFAULT NULL,
+    action VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(80) DEFAULT NULL,
+    entity_id INT DEFAULT NULL,
+    details_json TEXT DEFAULT NULL,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(255) DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- LOGIN HISTORY TABLE (for tracking abnormal logins)
 -- =====================================================
 CREATE TABLE login_history (
@@ -221,3 +252,14 @@ CREATE INDEX idx_notif_user ON notifications(user_id);
 CREATE INDEX idx_notif_created ON notifications(created_at);
 CREATE INDEX idx_notif_broadcast ON notifications(broadcast_key);
 CREATE INDEX idx_notif_type ON notifications(notification_type);
+CREATE INDEX idx_notif_user_read_created ON notifications(user_id, is_read, created_at);
+CREATE INDEX idx_notif_broadcast_created ON notifications(is_broadcast, broadcast_key, created_at);
+CREATE INDEX idx_app_sessions_expires ON app_sessions(expires_at);
+CREATE INDEX idx_app_sessions_user ON app_sessions(user_id);
+CREATE INDEX idx_app_sessions_last_seen ON app_sessions(last_seen_at);
+CREATE INDEX idx_activity_actor ON activity_logs(actor_user_id);
+CREATE INDEX idx_activity_target ON activity_logs(target_user_id);
+CREATE INDEX idx_activity_actor_email ON activity_logs(actor_email);
+CREATE INDEX idx_activity_target_email ON activity_logs(target_email);
+CREATE INDEX idx_activity_action ON activity_logs(action);
+CREATE INDEX idx_activity_created ON activity_logs(created_at);

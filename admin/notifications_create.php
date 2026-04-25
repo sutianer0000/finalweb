@@ -51,6 +51,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($result['email_errors'])) {
                 $successMsg .= ' Email errors: ' . count($result['email_errors']) . '.';
             }
+            logActivity('admin_sent_notification', [
+                'entity_type' => 'notification',
+                'details' => [
+                    'title' => $title,
+                    'notification_type' => $notificationType,
+                    'audience_scope' => $audience['scope'],
+                    'audience_key' => $audience['key'],
+                    'recipient_count' => $result['count'],
+                    'email_requested' => $sendEmail,
+                    'email_sent_count' => $result['emailed'],
+                    'email_error_count' => count($result['email_errors'] ?? []),
+                ],
+            ]);
             setFlash('success', $successMsg);
             redirect(BASE_URL . '/admin/notifications.php');
         }

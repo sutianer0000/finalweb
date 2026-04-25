@@ -3,7 +3,7 @@ require_once __DIR__ . '/includes/auth.php';
 
 if (isLoggedIn()) {
     $user = getCurrentUser();
-    if ($user['role'] === 'admin') {
+    if (in_array($user['role'], ['admin', 'superadmin'], true)) {
         redirect(BASE_URL . '/admin/dashboard.php');
     }
     if ($user['first_login'] == 1) {

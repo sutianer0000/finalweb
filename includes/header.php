@@ -10,8 +10,9 @@ $unreadNotifCount = 0;
 $recentNotifications = [];
 if ($currentUser && $currentUser['role'] === 'user') {
     require_once __DIR__ . '/notifications.php';
-    $unreadNotifCount = getUnreadNotificationCount($currentUser['id']);
-    $recentNotifications = getUserNotifications($currentUser['id'], 5);
+    $notificationSnapshot = getHeaderNotificationSnapshot($currentUser['id']);
+    $unreadNotifCount = $notificationSnapshot['unread_count'];
+    $recentNotifications = $notificationSnapshot['recent'];
 }
 ?>
 <!DOCTYPE html>
@@ -55,11 +56,14 @@ if ($currentUser && $currentUser['role'] === 'user') {
                             <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="<?= BASE_URL ?>/transfer.php">Transfer</a></li>
                             <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="<?= BASE_URL ?>/phone_card.php">Phone Card</a></li>
                             <li class="nav-item"><a class="nav-link<?= $lockClass ?>" href="<?= BASE_URL ?>/transactions.php">History</a></li>
-                        <?php elseif ($currentUser['role'] === 'admin'): ?>
+                        <?php elseif (in_array($currentUser['role'], ['admin', 'superadmin'], true)): ?>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/dashboard.php">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/accounts.php">Accounts</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/pending_transactions.php">Pending Transactions</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/notifications.php"><i class="bi bi-megaphone"></i> Notifications</a></li>
+                            <?php if ($currentUser['role'] === 'superadmin'): ?>
+                                <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/superadmin.php"><i class="bi bi-shield-lock"></i> Super Admin</a></li>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </ul>
                     <ul class="navbar-nav">

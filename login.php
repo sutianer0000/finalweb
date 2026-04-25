@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/lang.php';
 // If already logged in, redirect appropriately
 if (isLoggedIn()) {
     $user = getCurrentUser();
-    if ($user['role'] === 'admin') {
+    if (in_array($user['role'], ['admin', 'superadmin'], true)) {
         redirect(BASE_URL . '/admin/dashboard.php');
     }
     if ($user['first_login'] == 1) {
@@ -30,18 +30,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if (!$user) {
+            logActivity('login_failed_unknown', [
+                'target_email' => $username,
+                'entity_type' => 'auth',
+                'details' => ['identifier' => $username],
+            ]);
             $errors[] = __("invalid_username_or_password");
         } else {
             // Check if account is disabled
             if ($user['status'] === 'disabled') {
+                logActivity('login_blocked_disabled', [
+                    'target_user_id' => $user['id'],
+                    'target_email' => $user['email'],
+                    'entity_type' => 'auth',
+                ]);
                 $errors[] = __("account_disabled");
             }
             // Check if permanently locked
             elseif ($user['permanently_locked'] == 1) {
+                logActivity('login_blocked_permanent_lock', [
+                    'target_user_id' => $user['id'],
+                    'target_email' => $user['email'],
+                    'entity_type' => 'auth',
+                ]);
                 $errors[] = __("account_permanently_locked");
             }
             // Check if temporarily locked (1 minute)
             elseif ($user['locked_until'] !== null && strtotime($user['locked_until']) > time()) {
+                logActivity('login_blocked_temporary_lock', [
+                    'target_user_id' => $user['id'],
+                    'target_email' => $user['email'],
+                    'entity_type' => 'auth',
+                    'details' => ['locked_until' => $user['locked_until']],
+                ]);
                 $errors[] = __("account_temporarily_locked");
             } else {
                 // Clear temporary lock if expired
@@ -60,10 +81,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ->execute([$user['id'], $_SERVER['REMOTE_ADDR'] ?? '']);
 
                     // Set session
+                    session_regenerate_id(true);
                     $_SESSION['user_id'] = $user['id'];
+                    logActivity('login_success', [
+                        'actor_user_id' => $user['id'],
+                        'actor_email' => $user['email'],
+                        'actor_role' => $user['role'],
+                        'target_user_id' => $user['id'],
+                        'target_email' => $user['email'],
+                        'entity_type' => 'auth',
+                    ]);
 
                     // Redirect based on role and first_login
-                    if ($user['role'] === 'admin') {
+                    if (in_array($user['role'], ['admin', 'superadmin'], true)) {
                         redirect(BASE_URL . '/admin/dashboard.php');
                     } elseif ($user['first_login'] == 1) {
                         redirect(BASE_URL . '/first_login_password.php');
@@ -72,7 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     // Wrong password — only apply lock logic for non-admin
-                    if ($user['role'] !== 'admin') {
+                    logActivity('login_failed_password', [
+                        'target_user_id' => $user['id'],
+                        'target_email' => $user['email'],
+                        'entity_type' => 'auth',
+                    ]);
+                    if (!in_array($user['role'], ['admin', 'superadmin'], true)) {
                         $failedAttempts = $user['failed_login_attempts'] + 1;
 
                         // Record failed login

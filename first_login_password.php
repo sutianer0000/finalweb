@@ -31,11 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $db->prepare("UPDATE users SET password = ?, first_login = 0 WHERE id = ?");
         $stmt->execute([$hashedPassword, $user['id']]);
+        logActivity('user_completed_first_login_password', [
+            'target_user_id' => $user['id'],
+            'target_email' => $user['email'],
+            'entity_type' => 'user',
+            'entity_id' => $user['id'],
+        ]);
 
         setFlash('success', 'Password changed successfully! You can now use the system.');
 
         // Redirect based on role
-        if ($user['role'] === 'admin') {
+        if (in_array($user['role'], ['admin', 'superadmin'], true)) {
             redirect(BASE_URL . '/admin/dashboard.php');
         } else {
             redirect(BASE_URL . '/dashboard.php');

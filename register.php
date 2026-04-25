@@ -118,6 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             storeUserIdCardImages($db, $newUserId, $front, $back);
 
             $db->commit();
+            logActivity('user_registered', [
+                'target_user_id' => $newUserId,
+                'target_email' => $email,
+                'entity_type' => 'user',
+                'entity_id' => $newUserId,
+            ]);
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;
@@ -247,8 +253,7 @@ require_once __DIR__ . '/includes/header.php';
                             required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
-<<<<<<< Updated upstream
-                    <div class="mb-4">
+                    <div class="mb-4" data-id-card-field>
                         <label class="form-label"><?= __("id_card_front") ?> *</label>
 
                         <div class="upload-box" onclick="document.getElementById('id_card_front').click()">
@@ -261,9 +266,10 @@ require_once __DIR__ . '/includes/header.php';
 
                             <img id="preview_front" class="upload-preview d-none">
                         </div>
+                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4" data-id-card-field>
                         <label class="form-label"><?= __("id_card_back") ?> *</label>
 
                         <div class="upload-box" onclick="document.getElementById('id_card_back').click()">
@@ -276,24 +282,7 @@ require_once __DIR__ . '/includes/header.php';
 
                             <img id="preview_back" class="upload-preview d-none">
                         </div>
-=======
-                    <div class="mb-3">
-                        <label for="id_card_front" class="form-label"><?= __("id_card_front") ?> <span
-                                class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*"
-                            required>
-                        <div class="form-text"><?= __("front_help") ?></div>
                         <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_card_back" class="form-label"><?= __("id_card_back") ?> <span
-                                class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="id_card_back" name="id_card_back" accept="image/*"
-                            required>
-                        <div class="form-text"><?= __("back_help") ?></div>
-                        <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
->>>>>>> Stashed changes
                     </div>
 
                     <div class="d-grid">

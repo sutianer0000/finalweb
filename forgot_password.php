@@ -4,6 +4,10 @@ require_once __DIR__ . '/includes/mailer.php';
 
 // Logged-in users don't need this page
 if (isLoggedIn()) {
+    $currentUser = getCurrentUser();
+    if ($currentUser && in_array($currentUser['role'], ['admin', 'superadmin'], true)) {
+        redirect(BASE_URL . '/admin/dashboard.php');
+    }
     redirect(BASE_URL . '/dashboard.php');
 }
 
@@ -53,6 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
             if (!$result['ok']) {
                 $errors[] = 'Could not send OTP email. Please try again later.';
             } else {
+                logActivity('password_reset_otp_requested', [
+                    'target_user_id' => $user['id'],
+                    'target_email' => $user['email'],
+                    'entity_type' => 'auth',
+                ]);
                 $_SESSION['forgot'] = [
                     'stage'   => 'verify',
                     'user_id' => $user['id'],
@@ -98,6 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify'
                 $stage = 'verify';
             } else {
                 $db->prepare("UPDATE otp_codes SET used = 1 WHERE id = ?")->execute([$row['id']]);
+                logActivity('password_reset_otp_verified', [
+                    'target_user_id' => $userId,
+                    'target_email' => $_SESSION['forgot']['email'] ?? null,
+                    'entity_type' => 'auth',
+                ]);
                 $_SESSION['forgot']['stage']       = 'reset';
                 $_SESSION['forgot']['verified_at'] = time();
                 $stage = 'reset';
@@ -129,6 +143,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'reset')
             $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
             $db->prepare("UPDATE users SET password = ?, first_login = 0 WHERE id = ?")
                ->execute([$hashed, $userId]);
+            logActivity('password_reset_completed', [
+                'target_user_id' => $userId,
+                'target_email' => $_SESSION['forgot']['email'] ?? null,
+                'entity_type' => 'auth',
+            ]);
 
             unset($_SESSION['forgot']);
             setFlash('success', 'Password reset successfully. Please log in with your new password.');

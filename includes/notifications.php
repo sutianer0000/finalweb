@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/mailer.php';
 
 function getNotificationTypeOptions() {
     return [
@@ -159,6 +158,32 @@ function getUnreadNotificationCount($userId) {
     return (int) $stmt->fetchColumn();
 }
 
+function clearHeaderNotificationSnapshot($userId) {
+    unset($_SESSION['header_notifications'][(int) $userId]);
+}
+
+function getHeaderNotificationSnapshot($userId, $ttlSeconds = 45) {
+    $userId = (int) $userId;
+    $now = time();
+    $cache = $_SESSION['header_notifications'][$userId] ?? null;
+
+    if ($cache && ($now - (int) $cache['cached_at']) < $ttlSeconds) {
+        return $cache['data'];
+    }
+
+    $data = [
+        'unread_count' => getUnreadNotificationCount($userId),
+        'recent' => getUserNotifications($userId, 5),
+    ];
+
+    $_SESSION['header_notifications'][$userId] = [
+        'cached_at' => $now,
+        'data' => $data,
+    ];
+
+    return $data;
+}
+
 function getUserNotifications($userId, $limit = null, $onlyUnread = false) {
     $sql = "
         SELECT
@@ -223,6 +248,7 @@ function markAllNotificationsRead($userId) {
         WHERE user_id = ? AND is_read = 0
     ");
     $stmt->execute([$userId]);
+    clearHeaderNotificationSnapshot($userId);
 }
 
 function markNotificationRead($notificationId, $userId) {
@@ -232,59 +258,97 @@ function markNotificationRead($notificationId, $userId) {
         WHERE id = ? AND user_id = ? AND is_read = 0
     ");
     $stmt->execute([(int) $notificationId, (int) $userId]);
+    clearHeaderNotificationSnapshot($userId);
 }
 
-function getAdminNotificationList() {
+function getAdminNotificationStats() {
     $db = getDB();
 
-    $broadcasts = $db->query("
+    $broadcastStats = $db->query("
         SELECT
-            MIN(n.id) AS id,
-            n.broadcast_key,
-            MAX(n.title) AS title,
-            MAX(n.message) AS message,
-            MAX(n.notification_type) AS notification_type,
-            MAX(n.audience_scope) AS audience_scope,
-            MAX(n.audience_key) AS audience_key,
+            COUNT(*) AS message_count,
+            COALESCE(SUM(total_recipients), 0) AS total_recipients,
+            COALESCE(SUM(read_count), 0) AS read_count
+        FROM (
+            SELECT
+                n.broadcast_key,
+                COUNT(*) AS total_recipients,
+                SUM(n.is_read) AS read_count
+            FROM notifications n
+            WHERE n.is_broadcast = 1
+            GROUP BY n.broadcast_key
+        ) broadcast_groups
+    ")->fetch();
+
+    $directStats = $db->query("
+        SELECT
+            COUNT(*) AS message_count,
             COUNT(*) AS total_recipients,
-            SUM(n.is_read) AS read_count,
-            MIN(n.created_at) AS created_at,
-            1 AS is_broadcast,
-            NULL AS recipient_name,
-            MAX(sender.full_name) AS sender_name
-        FROM notifications n
-        JOIN users sender ON sender.id = n.sender_id
-        WHERE n.is_broadcast = 1
-        GROUP BY n.broadcast_key
+            COALESCE(SUM(is_read), 0) AS read_count
+        FROM notifications
+        WHERE is_broadcast = 0
+    ")->fetch();
+
+    return [
+        'total_messages' => (int) $broadcastStats['message_count'] + (int) $directStats['message_count'],
+        'broadcast_count' => (int) $broadcastStats['message_count'],
+        'direct_count' => (int) $directStats['message_count'],
+        'total_recipients' => (int) $broadcastStats['total_recipients'] + (int) $directStats['total_recipients'],
+        'total_read' => (int) $broadcastStats['read_count'] + (int) $directStats['read_count'],
+    ];
+}
+
+function getAdminNotificationList($limit = 50, $offset = 0) {
+    $db = getDB();
+    $limit = max(1, min(100, (int) $limit));
+    $offset = max(0, (int) $offset);
+
+    return $db->query("
+        SELECT *
+        FROM (
+            SELECT
+                MIN(n.id) AS id,
+                n.broadcast_key,
+                MAX(n.title) AS title,
+                MAX(n.message) AS message,
+                MAX(n.notification_type) AS notification_type,
+                MAX(n.audience_scope) AS audience_scope,
+                MAX(n.audience_key) AS audience_key,
+                COUNT(*) AS total_recipients,
+                SUM(n.is_read) AS read_count,
+                MIN(n.created_at) AS created_at,
+                1 AS is_broadcast,
+                NULL AS recipient_name,
+                MAX(sender.full_name) AS sender_name
+            FROM notifications n
+            JOIN users sender ON sender.id = n.sender_id
+            WHERE n.is_broadcast = 1
+            GROUP BY n.broadcast_key
+
+            UNION ALL
+
+            SELECT
+                n.id,
+                NULL AS broadcast_key,
+                n.title,
+                n.message,
+                n.notification_type,
+                n.audience_scope,
+                n.audience_key,
+                1 AS total_recipients,
+                n.is_read AS read_count,
+                n.created_at,
+                0 AS is_broadcast,
+                recipient.full_name AS recipient_name,
+                sender.full_name AS sender_name
+            FROM notifications n
+            JOIN users recipient ON recipient.id = n.user_id
+            JOIN users sender ON sender.id = n.sender_id
+            WHERE n.is_broadcast = 0
+        ) combined_notifications
+        ORDER BY created_at DESC
+        LIMIT {$limit} OFFSET {$offset}
     ")->fetchAll();
-
-    $directs = $db->query("
-        SELECT
-            n.id,
-            NULL AS broadcast_key,
-            n.title,
-            n.message,
-            n.notification_type,
-            n.audience_scope,
-            n.audience_key,
-            1 AS total_recipients,
-            n.is_read AS read_count,
-            n.created_at,
-            0 AS is_broadcast,
-            recipient.full_name AS recipient_name,
-            sender.full_name AS sender_name
-        FROM notifications n
-        JOIN users recipient ON recipient.id = n.user_id
-        JOIN users sender ON sender.id = n.sender_id
-        WHERE n.is_broadcast = 0
-    ")->fetchAll();
-
-    $combined = array_merge($broadcasts, $directs);
-    usort($combined, function ($a, $b) {
-        return strcmp($b['created_at'], $a['created_at']);
-    });
-
-    return $combined;
 }
 
 function getAdminNotificationDetail($notificationId) {
@@ -378,6 +442,8 @@ function formatNotificationRelativeTime($datetime) {
 }
 
 function sendNotificationEmail($toEmail, $toName, $title, $message, $typeLabel = 'General') {
+    require_once __DIR__ . '/mailer.php';
+
     return sendMail(
         $toEmail,
         $toName,
@@ -392,10 +458,7 @@ function buildNotificationEmailBody($name, $title, $message, $typeLabel) {
     $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $safeType = htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8');
     $safeMessage = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
-    $baseUrl = getenv('BASE_URL') ?: '';
-    $portalLabel = $baseUrl !== '' ? 'Open E-Wallet' : 'Sign in to E-Wallet';
-    $portalHref = $baseUrl !== '' ? $baseUrl . '/login.php' : '#';
-    $portalStyle = $baseUrl !== '' ? '' : 'pointer-events:none;opacity:0.75;';
+    $portalHref = htmlspecialchars(appUrl('login.php'), ENT_QUOTES, 'UTF-8');
 
     return <<<HTML
         <div style="margin:0;padding:24px;background-color:#f3f7fb;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">
@@ -420,7 +483,7 @@ function buildNotificationEmailBody($name, $title, $message, $typeLabel) {
                         </p>
                     </div>
                     <div style="margin-top:30px;">
-                        <a href="{$portalHref}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#0b1e3f;color:#ffffff;text-decoration:none;font-weight:600;{$portalStyle}">{$portalLabel}</a>
+                        <a href="{$portalHref}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#0b1e3f;color:#ffffff;text-decoration:none;font-weight:600;">Open E-Wallet</a>
                     </div>
                 </div>
                 <div style="padding:18px 32px;border-top:1px solid #e5edf5;background:#fbfdff;">
@@ -439,5 +502,6 @@ function buildNotificationEmailAltBody($name, $title, $message, $typeLabel) {
         . "You have a new {$typeLabel} notification from the E-Wallet administration team.\n\n"
         . "Subject: {$title}\n\n"
         . "{$message}\n\n"
+        . "Open E-Wallet: " . appUrl('login.php') . "\n\n"
         . "Please sign in to your E-Wallet account and open Notifications for the latest status and message history.\n";
 }
