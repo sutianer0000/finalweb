@@ -59,21 +59,21 @@
     }
 
     function getPreviewBox(input) {
-        const parent = input.parentElement;
-        let box = parent.querySelector('[data-id-card-preview]');
+        const field = input.closest('[data-id-card-field]') || input.closest('.mb-4') || input.parentElement;
+        let box = field.querySelector('[data-id-card-preview]');
         if (box) {
             return box;
         }
 
         box = document.createElement('div');
-        box.className = 'mt-3';
+        box.className = 'id-card-preview-slot mt-3';
         box.setAttribute('data-id-card-preview', '');
-        parent.appendChild(box);
+        field.appendChild(box);
         return box;
     }
 
     function getOrigDimsInputs(input) {
-        const parent = input.parentElement;
+        const parent = input.closest('[data-id-card-field]') || input.closest('.mb-4') || input.parentElement;
         const key = input.name;
         let widthEl = parent.querySelector('input[name="' + key + '_orig_width"]');
         let heightEl = parent.querySelector('input[name="' + key + '_orig_height"]');
@@ -138,7 +138,7 @@
                                 '<div class="small fw-semibold text-muted mb-2">Original img</div>' +
                                 '<div class="id-card-preview-original">' +
                                     '<span class="id-card-preview-original-frame">' +
-                                        '<img src="' + result.originalUrl + '" alt="Original upload preview">' +
+                                        '<img src="' + result.originalUrl + '" alt="Original upload preview" style="display:block;width:100%;max-width:100%;max-height:180px;object-fit:contain;">' +
                                         '<span class="id-card-crop-suggested-area" style="' + cropStyle + '"></span>' +
                                     '</span>' +
                                 '</div>' +
@@ -147,7 +147,7 @@
                         '<div class="id-card-preview-pane">' +
                             '<div class="border rounded p-2 h-100">' +
                                 '<div class="small fw-semibold text-muted mb-2">Cropped img by system</div>' +
-                                '<img src="' + result.previewUrl + '" class="id-card-preview-final rounded border" alt="Final cropped preview">' +
+                                '<img src="' + result.previewUrl + '" class="id-card-preview-final rounded border" alt="Final cropped preview" style="display:block;width:100%;max-width:100%;height:auto;max-height:180px;object-fit:contain;">' +
                             '</div>' +
                         '</div>' +
                     '</div>' +

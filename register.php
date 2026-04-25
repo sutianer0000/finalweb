@@ -247,7 +247,7 @@ require_once __DIR__ . '/includes/header.php';
                             required><?= sanitize($_POST['address'] ?? '') ?></textarea>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4" data-id-card-field>
                         <label class="form-label"><?= __("id_card_front") ?> *</label>
 
                         <div class="upload-box" onclick="document.getElementById('id_card_front').click()">
@@ -263,7 +263,7 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="form-text text-muted">After selecting an image, preview the final 900 x 600 version before submit.</div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4" data-id-card-field>
                         <label class="form-label"><?= __("id_card_back") ?> *</label>
 
                         <div class="upload-box" onclick="document.getElementById('id_card_back').click()">
