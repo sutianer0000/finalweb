@@ -1,6 +1,13 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 
+if (isLoggedIn()) {
+    logActivity('logout', [
+        'target_user_id' => $_SESSION['user_id'],
+        'entity_type' => 'auth',
+    ]);
+}
+
 $_SESSION = [];
 
 if (ini_get('session.use_cookies')) {

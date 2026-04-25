@@ -397,6 +397,21 @@
     transition: filter 0.15s ease, transform 0.15s ease;
 }
 
+.superadmin-access-form {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.8fr) minmax(150px, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 380px;
+}
+
+.superadmin-access-form .form-select {
+    min-height: 36px;
+    color: #d8e8ef;
+    background-color: rgba(4, 16, 30, 0.95);
+    border-color: rgba(56, 225, 255, 0.20);
+}
+
 /* Admin row-action / quick-access buttons — steel-blue to match the chips. */
 .admin-link-btn,
 .admin-link-btn.sn-btn-ghost,
@@ -429,7 +444,8 @@
     .admin-stat-grid,
     .admin-toolbar-grid,
     .admin-balance-strip,
-    .scanner-grid {
+    .scanner-grid,
+    .superadmin-access-form {
         grid-template-columns: 1fr;
     }
 

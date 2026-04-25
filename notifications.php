@@ -10,6 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'mark_all_read') {
         markAllNotificationsRead($user['id']);
+        logActivity('user_marked_all_notifications_read', [
+            'target_user_id' => $user['id'],
+            'target_email' => $user['email'],
+            'entity_type' => 'notification',
+        ]);
         setFlash('success', 'All notifications were marked as read.');
         redirect(BASE_URL . '/notifications.php' . (!empty($_GET['view']) ? '?view=' . urlencode($_GET['view']) : ''));
     }
@@ -18,6 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notificationId = (int) ($_POST['notification_id'] ?? 0);
         if ($notificationId > 0) {
             markNotificationRead($notificationId, $user['id']);
+            logActivity('user_marked_notification_read', [
+                'target_user_id' => $user['id'],
+                'target_email' => $user['email'],
+                'entity_type' => 'notification',
+                'entity_id' => $notificationId,
+            ]);
             setFlash('success', 'Notification marked as read.');
         }
         redirect(BASE_URL . '/notifications.php' . (!empty($_GET['view']) ? '?view=' . urlencode($_GET['view']) : ''));

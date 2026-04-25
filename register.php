@@ -118,6 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             storeUserIdCardImages($db, $newUserId, $front, $back);
 
             $db->commit();
+            logActivity('user_registered', [
+                'target_user_id' => $newUserId,
+                'target_email' => $email,
+                'entity_type' => 'user',
+                'entity_id' => $newUserId,
+            ]);
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;

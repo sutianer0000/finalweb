@@ -27,7 +27,7 @@ if ($userId <= 0) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    $stmt = $db->prepare("SELECT id, role, status FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, email, role, status FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $target = $stmt->fetch();
 
@@ -38,12 +38,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'verify') {
         $db->prepare("UPDATE users SET status = 'verified' WHERE id = ?")->execute([$userId]);
+        logActivity('admin_verified_user', [
+            'target_user_id' => $userId,
+            'target_email' => $target['email'],
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'details' => ['old_status' => $target['status'], 'new_status' => 'verified'],
+        ]);
         setFlash('success', 'Account has been verified.');
     } elseif ($action === 'cancel') {
         $db->prepare("UPDATE users SET status = 'disabled' WHERE id = ?")->execute([$userId]);
+        logActivity('admin_disabled_user', [
+            'target_user_id' => $userId,
+            'target_email' => $target['email'],
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'details' => ['old_status' => $target['status'], 'new_status' => 'disabled'],
+        ]);
         setFlash('success', 'Account has been disabled.');
     } elseif ($action === 'request_update') {
         $db->prepare("UPDATE users SET status = 'waiting_for_updates' WHERE id = ?")->execute([$userId]);
+        logActivity('admin_requested_user_update', [
+            'target_user_id' => $userId,
+            'target_email' => $target['email'],
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'details' => ['old_status' => $target['status'], 'new_status' => 'waiting_for_updates'],
+        ]);
         setFlash('success', 'Additional information requested. User can now re-upload their ID card.');
     } else {
         setFlash('error', 'Unknown action.');

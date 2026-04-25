@@ -63,6 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             storeUserIdCardImages($db, (int) $user['id'], $front, $back);
 
             $db->commit();
+            logActivity('user_reuploaded_id_card', [
+                'target_user_id' => $user['id'],
+                'target_email' => $user['email'],
+                'entity_type' => 'user_id_card',
+                'entity_id' => $user['id'],
+                'details' => ['new_status' => 'pending'],
+            ]);
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;
