@@ -18,6 +18,14 @@ function isLoggedIn() {
 // Explicit column list — excludes the id_card *_data BLOBs so we don't drag
 // ~MBs into every page load. Fetch BLOBs only via image.php.
 function getCurrentUser() {
+    static $loaded = false;
+    static $cachedUser = null;
+
+    if ($loaded) {
+        return $cachedUser;
+    }
+
+    $loaded = true;
     if (!isLoggedIn()) return null;
     $db = getDB();
     $stmt = $db->prepare("
@@ -38,9 +46,12 @@ function getCurrentUser() {
     if ($user === false) {
         session_unset();
         session_destroy();
+        $cachedUser = null;
         return null;
     }
-    return $user;
+
+    $cachedUser = $user;
+    return $cachedUser;
 }
 
 // Redirect helper

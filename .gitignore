@@ -44,6 +44,9 @@ desktop.ini
 *.log
 error_log
 php_errors.log
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
 
 # Temp files from merge/cherry-pick that should not be committed.
 *.rej
@@ -63,6 +66,10 @@ node_modules/
 *.sql.bak
 *.sql.gz
 *.dump
+*.mysql
+*.mysql.gz
+*_backup.sql
+*_dump.sql
 
 # IDE projects
 *.iml

@@ -1,11 +1,39 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-function sendMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
+function appBaseUrl(): string
+{
+    $appUrl = trim((string) (getenv('APP_URL') ?: ''));
+    if ($appUrl !== '') {
+        return rtrim($appUrl, '/');
+    }
+
+    $baseUrl = trim((string) (getenv('BASE_URL') ?: ''));
+    if (preg_match('#^https?://#i', $baseUrl)) {
+        return rtrim($baseUrl, '/');
+    }
+
+    $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
+    if ($host !== '') {
+        $proto = $_SERVER['HTTP_X_FORWARDED_PROTO']
+            ?? ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+        return rtrim($proto . '://' . $host . '/' . ltrim($baseUrl, '/'), '/');
+    }
+
+    return 'https://subnauewallet.fly.dev';
+}
+
+function appUrl(string $path = ''): string
+{
+    return appBaseUrl() . '/' . ltrim($path, '/');
+}
+
+function sendMailNow(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
 {
     $mail = new PHPMailer(true);
     try {
@@ -37,12 +65,104 @@ function sendMail(string $toEmail, string $toName, string $subject, string $html
     }
 }
 
+function queueMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = ''): array
+{
+    try {
+        $stmt = getDB()->prepare("
+            INSERT INTO email_queue (to_email, to_name, subject, html_body, alt_body)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $toEmail,
+            $toName,
+            $subject,
+            $htmlBody,
+            $altBody !== '' ? $altBody : strip_tags($htmlBody),
+        ]);
+
+        return ['ok' => true, 'queued' => true, 'error' => null, 'queue_id' => (int) getDB()->lastInsertId()];
+    } catch (Exception $e) {
+        error_log('[mailer] queue failed: ' . $e->getMessage());
+        return ['ok' => false, 'queued' => false, 'error' => $e->getMessage()];
+    }
+}
+
+function sendMail(string $toEmail, string $toName, string $subject, string $htmlBody, string $altBody = '', bool $queue = false): array
+{
+    if ($queue) {
+        return queueMail($toEmail, $toName, $subject, $htmlBody, $altBody);
+    }
+
+    $result = sendMailNow($toEmail, $toName, $subject, $htmlBody, $altBody);
+    $result['queued'] = false;
+    return $result;
+}
+
+function processQueuedEmails(int $limit = 20, int $maxAttempts = 5): array
+{
+    $db = getDB();
+    $limit = max(1, min(100, $limit));
+    $maxAttempts = max(1, $maxAttempts);
+
+    $stmt = $db->prepare("
+        SELECT id, to_email, to_name, subject, html_body, alt_body, attempts
+        FROM email_queue
+        WHERE status IN ('pending', 'failed')
+          AND attempts < ?
+          AND available_at <= NOW()
+        ORDER BY created_at ASC
+        LIMIT {$limit}
+    ");
+    $stmt->execute([$maxAttempts]);
+    $emails = $stmt->fetchAll();
+
+    $sent = 0;
+    $failed = 0;
+
+    foreach ($emails as $email) {
+        $attempts = (int) $email['attempts'] + 1;
+        $db->prepare("
+            UPDATE email_queue
+            SET status = 'processing', attempts = ?, updated_at = NOW()
+            WHERE id = ? AND status IN ('pending', 'failed')
+        ")->execute([$attempts, $email['id']]);
+
+        $result = sendMailNow(
+            $email['to_email'],
+            $email['to_name'],
+            $email['subject'],
+            $email['html_body'],
+            $email['alt_body']
+        );
+
+        if ($result['ok']) {
+            $db->prepare("
+                UPDATE email_queue
+                SET status = 'sent', sent_at = NOW(), last_error = NULL, updated_at = NOW()
+                WHERE id = ?
+            ")->execute([$email['id']]);
+            $sent++;
+        } else {
+            $retryAt = date('Y-m-d H:i:s', time() + min(600, max(30, $attempts * 60)));
+            $db->prepare("
+                UPDATE email_queue
+                SET status = 'failed', last_error = ?, available_at = ?, updated_at = NOW()
+                WHERE id = ?
+            ")->execute([$result['error'], $retryAt, $email['id']]);
+            $failed++;
+        }
+    }
+
+    return ['processed' => count($emails), 'sent' => $sent, 'failed' => $failed];
+}
+
 function sendRegistrationEmail(string $toEmail, string $fullName, string $phone, string $password): array
 {
     $safeName  = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
     $safeEmail = htmlspecialchars($toEmail,  ENT_QUOTES, 'UTF-8');
     $safePhone = htmlspecialchars($phone,    ENT_QUOTES, 'UTF-8');
     $safePass  = htmlspecialchars($password, ENT_QUOTES, 'UTF-8');
+    $loginUrl  = htmlspecialchars(appUrl('login.php'), ENT_QUOTES, 'UTF-8');
 
     $subject = 'E-Wallet Registration - Your Login Credentials';
     $html = "
@@ -55,6 +175,9 @@ function sendRegistrationEmail(string $toEmail, string $fullName, string $phone,
                 <tr><td style='padding:8px;border:1px solid #ddd;background:#f8f9fa'><strong>Password</strong></td><td style='padding:8px;border:1px solid #ddd;font-family:monospace;font-size:16px'>{$safePass}</td></tr>
             </table>
             <p style='color:#b45309'><strong>Important:</strong> You will be asked to change this password on your first login. Your account is pending administrator verification.</p>
+            <p style='margin:24px 0 10px'>
+                <a href='{$loginUrl}' style='display:inline-block;padding:12px 20px;border-radius:999px;background:#0b1e3f;color:#ffffff;text-decoration:none;font-weight:600'>Log in to E-Wallet</a>
+            </p>
             <p style='color:#6c757d;font-size:12px;margin-top:24px'>If you did not register for this account, please ignore this email.</p>
         </div>
     ";
@@ -62,14 +185,16 @@ function sendRegistrationEmail(string $toEmail, string $fullName, string $phone,
          . "Email:    {$toEmail}\n"
          . "Phone:    {$phone}\n"
          . "Password: {$password}\n\n"
+         . "Login: " . appUrl('login.php') . "\n\n"
          . "You will be asked to change this password on first login.";
 
-    return sendMail($toEmail, $fullName, $subject, $html, $alt);
+    return sendMail($toEmail, $fullName, $subject, $html, $alt, true);
 }
 function sendPasswordResetOtp(string $toEmail, string $fullName, string $otp): array
 {
     $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
     $safeOtp  = htmlspecialchars($otp,      ENT_QUOTES, 'UTF-8');
+    $loginUrl = htmlspecialchars(appUrl('login.php'), ENT_QUOTES, 'UTF-8');
 
     $subject = 'E-Wallet Password Reset - Your OTP Code';
     $html = "
@@ -78,12 +203,16 @@ function sendPasswordResetOtp(string $toEmail, string $fullName, string $otp): a
             <p>Hi {$safeName}, use this code to reset your E-Wallet password:</p>
             <div style='font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;background:#f8f9fa;padding:16px;border-radius:6px;margin:16px 0'>{$safeOtp}</div>
             <p>This code expires in 10 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+            <p style='margin:24px 0 10px'>
+                <a href='{$loginUrl}' style='display:inline-block;padding:12px 20px;border-radius:999px;background:#0b1e3f;color:#ffffff;text-decoration:none;font-weight:600'>Open E-Wallet</a>
+            </p>
             <p style='color:#6c757d;font-size:12px;margin-top:24px'>For your security, never share this code with anyone.</p>
         </div>
     ";
     $alt = "Hi {$fullName},\n\n"
          . "Your E-Wallet password reset code is: {$otp}\n\n"
          . "This code expires in 10 minutes.\n"
+         . "Login: " . appUrl('login.php') . "\n"
          . "If you did not request this, please ignore this email.";
 
     return sendMail($toEmail, $fullName, $subject, $html, $alt);

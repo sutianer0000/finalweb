@@ -168,6 +168,25 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB;
 
 -- =====================================================
+-- EMAIL QUEUE TABLE (async SMTP delivery)
+-- =====================================================
+CREATE TABLE email_queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    to_email VARCHAR(255) NOT NULL,
+    to_name VARCHAR(255) DEFAULT '',
+    subject VARCHAR(255) NOT NULL,
+    html_body MEDIUMTEXT NOT NULL,
+    alt_body TEXT DEFAULT NULL,
+    status ENUM('pending', 'processing', 'sent', 'failed') DEFAULT 'pending',
+    attempts INT DEFAULT 0,
+    last_error TEXT DEFAULT NULL,
+    available_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sent_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- LOGIN HISTORY TABLE (for tracking abnormal logins)
 -- =====================================================
 CREATE TABLE login_history (
@@ -221,3 +240,6 @@ CREATE INDEX idx_notif_user ON notifications(user_id);
 CREATE INDEX idx_notif_created ON notifications(created_at);
 CREATE INDEX idx_notif_broadcast ON notifications(broadcast_key);
 CREATE INDEX idx_notif_type ON notifications(notification_type);
+CREATE INDEX idx_notif_user_read_created ON notifications(user_id, is_read, created_at);
+CREATE INDEX idx_notif_broadcast_created ON notifications(is_broadcast, broadcast_key, created_at);
+CREATE INDEX idx_email_queue_ready ON email_queue(status, available_at, attempts, created_at);

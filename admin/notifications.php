@@ -3,23 +3,14 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/notifications.php';
 requireAdmin();
 
-$sentList = getAdminNotificationList();
+$stats = getAdminNotificationStats();
+$sentList = getAdminNotificationList(50);
 
-$totalMessages = count($sentList);
-$broadcastCount = 0;
-$directCount = 0;
-$totalRecipients = 0;
-$totalRead = 0;
-
-foreach ($sentList as $row) {
-    $totalRecipients += (int) $row['total_recipients'];
-    $totalRead += (int) $row['read_count'];
-    if (!empty($row['is_broadcast'])) {
-        $broadcastCount++;
-    } else {
-        $directCount++;
-    }
-}
+$totalMessages = $stats['total_messages'];
+$broadcastCount = $stats['broadcast_count'];
+$directCount = $stats['direct_count'];
+$totalRecipients = $stats['total_recipients'];
+$totalRead = $stats['total_read'];
 
 $pageTitle = 'Notification Manager';
 require_once __DIR__ . '/../includes/header.php';
@@ -76,7 +67,7 @@ require_once __DIR__ . '/../includes/header.php';
             <h5 class="mb-0"><i class="bi bi-clock-history"></i> Message History</h5>
             <small class="text-muted">Notification type, audience, and delivery progress.</small>
         </div>
-        <small class="text-muted"><?= $totalMessages ?> total</small>
+        <small class="text-muted">Showing latest <?= count($sentList) ?> of <?= $totalMessages ?> total</small>
     </div>
     <div class="card-body p-0">
         <?php if (empty($sentList)): ?>
@@ -106,7 +97,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td>
                                     <div class="fw-semibold"><?= sanitize($row['title']) ?></div>
-                                    <div class="small text-muted mt-1" style="max-width: 320px;">
+                                    <div class="small mt-1" style="max-width: 320px; color: #e3edf2; font-weight: 500;">
                                         <?= sanitize(mb_substr($row['message'], 0, 120)) ?><?= mb_strlen($row['message']) > 120 ? '...' : '' ?>
                                     </div>
                                 </td>

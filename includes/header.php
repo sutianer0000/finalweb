@@ -10,8 +10,9 @@ $unreadNotifCount = 0;
 $recentNotifications = [];
 if ($currentUser && $currentUser['role'] === 'user') {
     require_once __DIR__ . '/notifications.php';
-    $unreadNotifCount = getUnreadNotificationCount($currentUser['id']);
-    $recentNotifications = getUserNotifications($currentUser['id'], 5);
+    $notificationSnapshot = getHeaderNotificationSnapshot($currentUser['id']);
+    $unreadNotifCount = $notificationSnapshot['unread_count'];
+    $recentNotifications = $notificationSnapshot['recent'];
 }
 ?>
 <!DOCTYPE html>

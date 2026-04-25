@@ -5,6 +5,7 @@
 
 // --- URL base path for XAMPP (app lives at http://localhost/finalweb/) ---
 putenv('BASE_URL=/finalweb');
+putenv('APP_URL=http://localhost/finalweb');
 
 // --- Local MySQL ---
 putenv('DB_HOST=localhost');
