@@ -1,7 +1,7 @@
 <?php
 // Template for local development. Copy to config/local.php and fill in real values.
 // config/local.php is gitignored — never commit actual credentials.
-// This file is only read during local XAMPP dev; on Railway, env vars are set in the dashboard.
+// This file is only read during local XAMPP dev; deployed apps use platform env vars/secrets.
 
 // --- URL base path for XAMPP (app lives at http://localhost/finalweb/) ---
 putenv('BASE_URL=/finalweb');

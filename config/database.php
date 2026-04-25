@@ -1,6 +1,6 @@
 <?php
-// Database configuration — reads credentials from env vars set in config/local.php.
-// Copy config/local.example.php to config/local.php and fill in your XAMPP creds.
+// Database configuration. Local XAMPP can use config/local.php; deployed
+// environments can set DATABASE_URL/MYSQL_URL or the individual DB_* vars.
 
 if (file_exists(__DIR__ . '/local.php')) {
     require_once __DIR__ . '/local.php';
@@ -8,11 +8,23 @@ if (file_exists(__DIR__ . '/local.php')) {
 
 date_default_timezone_set(getenv('APP_TZ') ?: 'Asia/Ho_Chi_Minh');
 
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_NAME', getenv('DB_NAME') ?: 'ewallet');
+$databaseUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL');
+
+if ($databaseUrl) {
+    $parts = parse_url($databaseUrl);
+
+    define('DB_HOST', $parts['host'] ?? 'localhost');
+    define('DB_PORT', (int)($parts['port'] ?? 3306));
+    define('DB_USER', isset($parts['user']) ? urldecode($parts['user']) : 'root');
+    define('DB_PASS', isset($parts['pass']) ? urldecode($parts['pass']) : '');
+    define('DB_NAME', isset($parts['path']) ? ltrim($parts['path'], '/') : 'ewallet');
+} else {
+    define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+    define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
+    define('DB_USER', getenv('DB_USER') ?: 'root');
+    define('DB_PASS', getenv('DB_PASS') ?: '');
+    define('DB_NAME', getenv('DB_NAME') ?: 'ewallet');
+}
 
 function getDB() {
     static $pdo = null;
@@ -30,8 +42,8 @@ function getDB() {
                 ]
             );
         } catch (PDOException $e) {
-            error_log("[db] connect failed (host=" . DB_HOST . " db=" . DB_NAME . " user=" . DB_USER . "): " . $e->getMessage());
-            die("Database connection failed. Check config/local.php and that MySQL is running.");
+            error_log("[db] connect failed (host=" . DB_HOST . " port=" . DB_PORT . " db=" . DB_NAME . " user=" . DB_USER . "): " . $e->getMessage());
+            die("Database connection failed.");
         }
     }
     return $pdo;

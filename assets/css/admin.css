@@ -19,7 +19,7 @@
 
 .admin-heading p {
     margin: 0.25rem 0 0;
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-size: 0.92rem;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .admin-stat-label {
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -93,9 +93,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.28rem 0.6rem;
+    padding: 0.32rem 0.7rem;
     border-radius: 999px;
-    border: 1px solid transparent;
+    border: none;
+    color: #ffffff;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -103,41 +104,31 @@
     white-space: nowrap;
 }
 
-.admin-chip.is-verified {
-    color: #96f0c6;
-    background: rgba(42, 157, 143, 0.14);
-    border-color: rgba(42, 157, 143, 0.32);
+.admin-chip.is-verified,
+.admin-chip.is-approved {
+    background: #1f9d8a;        /* solid teal-green */
+    color: #ffffff;
 }
 
 .admin-chip.is-pending {
-    color: #ffd38b;
-    background: rgba(255, 179, 71, 0.14);
-    border-color: rgba(255, 179, 71, 0.28);
+    background: #c97a14;        /* solid amber */
+    color: #ffffff;
 }
 
 .admin-chip.is-waiting {
-    color: #8eeeff;
-    background: rgba(56, 225, 255, 0.14);
-    border-color: rgba(56, 225, 255, 0.28);
+    background: #2f6fb8;        /* solid steel-blue (replacing cyan) */
+    color: #ffffff;
 }
 
 .admin-chip.is-disabled,
 .admin-chip.is-rejected {
-    color: #ffab97;
-    background: rgba(255, 122, 89, 0.14);
-    border-color: rgba(255, 122, 89, 0.28);
-}
-
-.admin-chip.is-approved {
-    color: #96f0c6;
-    background: rgba(42, 157, 143, 0.14);
-    border-color: rgba(42, 157, 143, 0.32);
+    background: #c14a30;        /* solid coral */
+    color: #ffffff;
 }
 
 .admin-chip.is-info {
-    color: #9edcf2;
-    background: rgba(120, 180, 210, 0.14);
-    border-color: rgba(120, 180, 210, 0.28);
+    background: #5189aa;        /* solid muted blue */
+    color: #ffffff;
 }
 
 .admin-toolbar {
@@ -170,25 +161,25 @@
     display: inline-flex;
     align-items: center;
     min-height: 36px;
-    padding: 0.45rem 0.75rem;
+    padding: 0.45rem 0.85rem;
     border-radius: 10px;
-    border: 1px solid rgba(56, 225, 255, 0.14);
-    color: rgba(216, 232, 239, 0.76);
-    background: rgba(255, 255, 255, 0.02);
-    font-size: 0.83rem;
+    border: 1px solid rgba(216, 232, 239, 0.30);
+    color: #F2F6FA;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
 .admin-tab:hover {
-    color: #d8e8ef;
-    border-color: rgba(56, 225, 255, 0.22);
+    color: #ffffff;
+    border-color: rgba(216, 232, 239, 0.55);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .admin-tab.is-active {
-    color: #051225;
-    background: #38E1FF;
-    border-color: #38E1FF;
-    box-shadow: 0 0 16px rgba(56, 225, 255, 0.28);
+    color: #ffffff;
+    background: #2f6fb8;
+    border-color: #2f6fb8;
 }
 
 .admin-toolbar .form-control,
@@ -206,11 +197,21 @@
 .admin-table {
     margin-bottom: 0;
     color: #d8e8ef;
+    /* Override Bootstrap 5's default white --bs-table-bg so the
+       admin-table-wrap's dark navy fill shows through tbody cells. */
+    --bs-table-bg: transparent;
+    --bs-table-color: #d8e8ef;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+    --bs-table-striped-color: #d8e8ef;
+    --bs-table-hover-bg: rgba(56, 225, 255, 0.06);
+    --bs-table-hover-color: #ffffff;
+    --bs-table-border-color: rgba(56, 225, 255, 0.10);
+    background-color: transparent;
 }
 
 .admin-table thead th {
     border-bottom: 1px solid rgba(56, 225, 255, 0.14);
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-size: 0.77rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -237,12 +238,13 @@
 }
 
 .admin-table .muted {
-    color: rgba(216, 232, 239, 0.62);
+    color: #e3edf2;
+    font-weight: 500;
 }
 
 .admin-empty {
     padding: 1rem;
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-style: italic;
 }
 
@@ -253,8 +255,8 @@
 }
 
 .admin-kv dt {
-    color: rgba(216, 232, 239, 0.62);
-    font-weight: 500;
+    color: #b4cad2;
+    font-weight: 600;
 }
 
 .admin-kv dd {
@@ -277,7 +279,7 @@
 
 .admin-balance-cell h6 {
     margin: 0 0 0.4rem;
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-size: 0.76rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -339,7 +341,7 @@
 .scanner-card label {
     display: block;
     margin-bottom: 0.55rem;
-    color: rgba(216, 232, 239, 0.62);
+    color: rgba(216, 232, 239, 0.82);
     font-size: 0.76rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -372,29 +374,55 @@
 }
 
 .admin-action-btn.is-verify {
-    color: #dffaf5;
-    background: #1f8a7c;
-    border-color: #2aa194;
+    color: #ffffff;
+    background: #1f9d8a;
+    border-color: #1f9d8a;
 }
 
 .admin-action-btn.is-request {
-    color: #e7fbff;
-    background: #187f93;
-    border-color: #38E1FF;
+    color: #ffffff;
+    background: #2f6fb8;
+    border-color: #2f6fb8;
 }
 
 .admin-action-btn.is-disable {
-    color: #fff0ec;
-    background: #a54d3b;
-    border-color: #ff7a59;
+    color: #ffffff;
+    background: #c14a30;
+    border-color: #c14a30;
 }
 
 .admin-action-btn:hover {
-    filter: brightness(1.03);
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    transition: filter 0.15s ease, transform 0.15s ease;
 }
 
-.admin-link-btn {
+/* Admin row-action / quick-access buttons — steel-blue to match the chips. */
+.admin-link-btn,
+.admin-link-btn.sn-btn-ghost,
+.admin-link-btn.btn-outline-secondary {
     min-height: 40px;
+    background: #2f6fb8;
+    border: 1px solid #2f6fb8;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.admin-link-btn:hover,
+.admin-link-btn.sn-btn-ghost:hover,
+.admin-link-btn.btn-outline-secondary:hover {
+    background: #3a82d1;
+    border-color: #3a82d1;
+    color: #ffffff;
+}
+
+/* Disabled / count=0 admin link buttons keep a faded steel tone so they
+   read as "nothing to do" without disappearing into the background. */
+.admin-link-btn.disabled,
+.admin-link-btn[aria-disabled="true"] {
+    background: rgba(47, 111, 184, 0.35);
+    border-color: rgba(47, 111, 184, 0.35);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 @media (max-width: 991.98px) {

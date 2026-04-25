@@ -1,11 +1,10 @@
-# E-Wallet — thin-local branch (frontend dev)
+# E-Wallet - deploy-ready main branch
 
 A PHP + MySQL web-based e-wallet: registration, admin verification,
 deposit / withdraw / transfer, phone-card purchase, transaction history.
 
-> **This branch is for local XAMPP development only.** It has no Docker,
-> Fly.io, CI, or migration files — those live on `main`. Clone this branch,
-> drop in your credentials, and you're running on localhost in a few minutes.
+This branch includes the latest local UI/notification/upload work plus the
+Docker/Fly.io files needed to deploy a test build from `main`.
 
 ---
 
@@ -23,11 +22,11 @@ deposit / withdraw / transfer, phone-card purchase, transaction history.
 
 ## First-time setup
 
-### 1. Clone into XAMPP's `htdocs` on the `thin-local` branch
+### 1. Clone into XAMPP's `htdocs` on the `main` branch
 
 ```bash
 cd /path/to/xampp/htdocs
-git clone -b thin-local <repo-url> finalweb
+git clone -b main <repo-url> finalweb
 cd finalweb
 ```
 
@@ -146,6 +145,33 @@ finalweb/
 ├── register.php / login.php / dashboard.php / ...
 └── vendor/                    Composer packages (gitignored)
 ```
+
+---
+
+## Deploying a Test Build
+
+The `main` branch is configured for Fly.io deployment with Docker:
+
+- `Dockerfile` builds PHP 8.2 + Apache and installs Composer dependencies.
+- `fly.toml` points Fly to the PHP app on port 80.
+- `.github/workflows/fly-deploy.yml` deploys automatically when `main` is pushed.
+
+Required deploy secrets/env vars:
+
+```bash
+DATABASE_URL=mysql://user:password@host:3306/ewallet
+BASE_URL=
+SMTP_USERNAME=...
+SMTP_PASSWORD=...
+MAIL_FROM=...
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=tls
+MAIL_FROM_NAME=E-Wallet
+APP_TZ=Asia/Ho_Chi_Minh
+```
+
+For GitHub Actions, set `FLY_API_TOKEN` in repository secrets.
 
 ---
 

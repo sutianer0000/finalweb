@@ -1,20 +1,25 @@
 # =========================================================================
-# thin-local branch — local XAMPP development only.
-# Everything credential-bearing or environment-specific stays out of git.
+# Shared ignore rules for local development and deployment.
+# Keep credentials, installed dependencies, runtime files, and scratch assets
+# out of git.
 # =========================================================================
 
 # Local config (DB + SMTP credentials). NEVER commit.
 config/local.php
 
-# Composer dependencies — run `composer install` to restore.
+# Composer dependencies - run `composer install` locally; Docker installs them.
 /vendor/
 composer.phar
 
-# Legacy local uploads dir — ID cards now live in DB as BLOBs,
-# but older XAMPP runs may have leftover files on disk. Never commit them.
+# Fly.io local state
+.fly/
+fly.toml.bak
+
+# Legacy local uploads dir - ID cards now live in DB as BLOBs,
+# but older XAMPP runs may have leftover files on disk.
 /uploads/
 
-# Environment files (in case anyone adds .env-style loading later)
+# Environment files
 .env
 .env.*
 !.env.example
@@ -40,27 +45,26 @@ desktop.ini
 error_log
 php_errors.log
 
-# Temp files from merge/cherry-pick that shouldn't be committed
+# Temp files from merge/cherry-pick that should not be committed.
 *.rej
 
-# Local-only design briefs / scratch docs (generated, not source-of-truth).
-# Keep design discussions on Drive/Discord — binaries don't diff well.
+# Local-only design briefs / scratch docs.
 UI_BRIEF_SUBNAUTICA.*
 *.scratch.md
 
-# Python bytecode (if anyone runs the doc-generator script locally)
+# Python bytecode from local utility scripts.
 __pycache__/
 *.pyc
 
-# Defensive — in case someone adds JS tooling later
+# Defensive - in case JS tooling is added later.
 node_modules/
 
-# Database dumps / backups (keep production data out of git)
+# Database dumps / backups; keep real data out of git.
 *.sql.bak
 *.sql.gz
 *.dump
 
-# IDE projects (catches more than .vscode / .idea)
+# IDE projects
 *.iml
 .project
 .settings/
