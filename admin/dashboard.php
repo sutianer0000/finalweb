@@ -1,14 +1,35 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/cache.php';
 requireAdmin();
 
-$db = getDB();
+// Dashboard counts barely change between renders — cache for 30s so we collapse
+// 5 round-trips per page load into one. Verification/disable actions invalidate
+// via forgetCached('admin_dashboard_counts').
+$counts = rememberCached('admin_dashboard_counts', 30, function () {
+    $db = getDB();
+    // One round-trip instead of five — group by status, then add the txn count.
+    $userRows = $db->query("
+        SELECT status, COUNT(*) AS n
+        FROM users
+        WHERE role = 'user'
+        GROUP BY status
+    ")->fetchAll(PDO::FETCH_KEY_PAIR);
 
-$pendingCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'pending' AND role = 'user'")->fetchColumn();
-$verifiedCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'verified' AND role = 'user'")->fetchColumn();
-$waitingCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'waiting_for_updates' AND role = 'user'")->fetchColumn();
-$disabledCount = $db->query("SELECT COUNT(*) FROM users WHERE status = 'disabled' AND role = 'user'")->fetchColumn();
-$pendingTxnCount = $db->query("SELECT COUNT(*) FROM transactions WHERE status = 'pending'")->fetchColumn();
+    return [
+        'pending'      => (int) ($userRows['pending'] ?? 0),
+        'verified'     => (int) ($userRows['verified'] ?? 0),
+        'waiting'      => (int) ($userRows['waiting_for_updates'] ?? 0),
+        'disabled'     => (int) ($userRows['disabled'] ?? 0),
+        'pending_txn'  => (int) $db->query("SELECT COUNT(*) FROM transactions WHERE status = 'pending'")->fetchColumn(),
+    ];
+});
+
+$pendingCount    = $counts['pending'];
+$verifiedCount   = $counts['verified'];
+$waitingCount    = $counts['waiting'];
+$disabledCount   = $counts['disabled'];
+$pendingTxnCount = $counts['pending_txn'];
 
 $pageTitle = 'Admin Dashboard';
 $pageStyles = ['admin.css'];

@@ -1,0 +1,35 @@
+# Browser cache headers for static assets.
+# CSS / JS / fonts / images don't change between deploys (every deploy ships
+# a new container image with fresh files), so a long max-age is safe.
+# If you start versioning assets via ?v= query strings or hashed filenames,
+# you can bump max-age to 1 year — until then a week is conservative.
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Stylesheets and scripts — 7 days
+    ExpiresByType text/css                   "access plus 7 days"
+    ExpiresByType application/javascript     "access plus 7 days"
+    ExpiresByType text/javascript            "access plus 7 days"
+
+    # Images — 30 days
+    ExpiresByType image/jpeg                 "access plus 30 days"
+    ExpiresByType image/png                  "access plus 30 days"
+    ExpiresByType image/gif                  "access plus 30 days"
+    ExpiresByType image/webp                 "access plus 30 days"
+    ExpiresByType image/svg+xml              "access plus 30 days"
+    ExpiresByType image/x-icon               "access plus 30 days"
+
+    # Fonts — 1 year (rarely change)
+    ExpiresByType font/woff                  "access plus 1 year"
+    ExpiresByType font/woff2                 "access plus 1 year"
+    ExpiresByType application/font-woff      "access plus 1 year"
+    ExpiresByType application/font-woff2     "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Public + immutable hint for proxies/CDNs.
+    <FilesMatch "\.(css|js|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>

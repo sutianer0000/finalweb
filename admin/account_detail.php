@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/cache.php';
 requireAdmin();
 
 $db = getDB();
@@ -71,7 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'details' => ['old_status' => $target['status'], 'new_status' => 'waiting_for_updates'],
         ]);
         setFlash('success', 'Additional information requested. User can now re-upload their ID card.');
-    } else {
+    }
+
+    // Any status change above invalidates the dashboard count cache so the
+    // next admin page load reflects the new totals immediately.
+    if (in_array($action, ['verify', 'cancel', 'request_update'], true)) {
+        forgetCached('admin_dashboard_counts');
+    }
+
+    if (!in_array($action, ['verify', 'cancel', 'request_update'], true)) {
         setFlash('error', 'Unknown action.');
     }
 

@@ -273,6 +273,8 @@ CREATE INDEX idx_transactions_user ON transactions(user_id);
 CREATE INDEX idx_transactions_status ON transactions(status);
 CREATE INDEX idx_transactions_type ON transactions(type);
 CREATE INDEX idx_transactions_created ON transactions(created_at);
+CREATE INDEX idx_tx_user_status_created ON transactions(user_id, status, created_at);
+CREATE INDEX idx_tx_status_created ON transactions(status, created_at);
 CREATE INDEX idx_otp_user ON otp_codes(user_id);
 CREATE INDEX idx_otp_user_purpose_created ON otp_codes(user_id, purpose, created_at);
 CREATE INDEX idx_phone_cards_transaction ON phone_cards(transaction_id);

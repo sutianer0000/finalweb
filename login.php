@@ -26,8 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $errors[] = __("please_enter_both");
     } else {
-        // Find user by email or phone
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = ? OR phone_number = ?");
+        // Find user by email or phone — explicit columns only so we never
+        // drag id_card BLOBs (none here, but future-proof) or oversized
+        // metadata into the auth path.
+        $stmt = $db->prepare("
+            SELECT id, email, phone_number, password, role, status, first_login,
+                   failed_login_attempts, has_abnormal_login, locked_until,
+                   permanently_locked
+            FROM users
+            WHERE email = ? OR phone_number = ?
+            LIMIT 1
+        ");
         $stmt->execute([$username, $username]);
         $user = $stmt->fetch();
 
