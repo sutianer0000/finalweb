@@ -175,7 +175,7 @@ function dashboardStatusLabel($status) {
                                     <span class="activity-type <?= dashboardTypeClass($activity['type']) ?>">
                                         <?= sanitize(dashboardTypeLabel($activity['type'])) ?>
                                     </span>
-                                    <span class="activity-amount-cell">
+                                    <div class="activity-amount-cell">
                                         <span class="activity-amount <?= $isNegative ? 'is-negative' : 'is-positive' ?>">
                                             <?= dashboardSignedAmount($activity['type'], $activity['amount']) ?>
                                         </span>
@@ -184,7 +184,7 @@ function dashboardStatusLabel($status) {
                                                 <?= __('fee') ?>: <?= formatMoney($fee) ?>
                                             </span>
                                         <?php endif; ?>
-                                    </span>
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
                         </ul>

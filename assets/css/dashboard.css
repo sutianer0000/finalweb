@@ -311,10 +311,10 @@
 
 .activity-row {
     display: grid;
-    grid-template-columns: 90px minmax(0, 1fr) auto;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.8rem;
-    padding: 0.95rem 1.35rem;
+    gap: 0.7rem;
+    padding: 0.85rem 1.1rem;
     border-top: 1px solid rgba(56, 225, 255, 0.14);
     border-left: 3px solid transparent;
     transition: background 0.18s ease, border-left-color 0.18s ease;
@@ -343,11 +343,12 @@
     border: 1px solid rgba(56, 225, 255, 0.18);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.02);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #dffcff;
+    white-space: nowrap;          /* never break "CHUYỂN ĐI" mid-word */
 }
 
 .activity-type.is-deposit,
@@ -380,17 +381,25 @@
     color: #ff9f88;
 }
 
-/* Stack the amount + fee in a single grid cell so layout still aligns. */
+/* Stack the amount + fee in a single grid cell so layout still aligns.
+   !important on flex-direction guards against any global span/inline override. */
 .activity-amount-cell {
     justify-self: end;
     text-align: right;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     align-items: flex-end;
     line-height: 1.15;
+    min-width: 0;
+}
+
+.activity-amount-cell .activity-amount {
+    display: block;
+    width: auto;
 }
 
 .activity-fee {
+    display: block;
     margin-top: 2px;
     font-size: 0.72rem;
     font-weight: 500;
