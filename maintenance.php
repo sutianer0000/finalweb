@@ -11,13 +11,14 @@ if (!headers_sent()) {
     <title>Maintenance - E-Wallet</title>
     <style>
         :root {
-            --bg: #020914;
-            --panel: rgba(5, 24, 44, 0.82);
-            --cyan: #27d7e8;
-            --blue: #4aa3ff;
-            --amber: #f5c45a;
-            --text: #edf8ff;
-            --muted: #9fb8ca;
+            --deep: #020811;
+            --sea: #053044;
+            --aqua: #24e5dd;
+            --green: #65ffb7;
+            --amber: #ffc85a;
+            --text: #effbff;
+            --muted: #a7c1d3;
+            --panel: rgba(4, 19, 36, 0.82);
         }
 
         * {
@@ -31,9 +32,9 @@ if (!headers_sent()) {
             color: var(--text);
             font-family: Arial, sans-serif;
             background:
-                radial-gradient(circle at 50% 110%, rgba(39, 215, 232, 0.18), transparent 42%),
-                radial-gradient(circle at 80% 18%, rgba(74, 163, 255, 0.14), transparent 28%),
-                linear-gradient(180deg, #020914 0%, #04182c 48%, #062f42 100%);
+                radial-gradient(circle at 24% 14%, rgba(101, 255, 183, 0.12), transparent 26%),
+                radial-gradient(circle at 75% 22%, rgba(36, 229, 221, 0.16), transparent 30%),
+                linear-gradient(180deg, #020811 0%, #05192b 42%, #082f44 61%, #041723 100%);
         }
 
         body::before,
@@ -46,20 +47,24 @@ if (!headers_sent()) {
 
         body::before {
             background:
-                linear-gradient(rgba(39, 215, 232, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(39, 215, 232, 0.08) 1px, transparent 1px);
-            background-size: 72px 72px;
-            mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 88%, transparent);
-            animation: grid-drift 9s linear infinite;
+                radial-gradient(circle, rgba(255,255,255,0.42) 0 1px, transparent 2px) 14% 19% / 160px 160px,
+                radial-gradient(circle, rgba(255,255,255,0.24) 0 1px, transparent 2px) 68% 30% / 220px 220px,
+                radial-gradient(circle, rgba(255,255,255,0.16) 0 1px, transparent 2px) 88% 62% / 130px 130px;
+            opacity: 0.55;
+            animation: particles 18s linear infinite;
         }
 
         body::after {
+            top: auto;
+            height: 43vh;
             background:
-                radial-gradient(circle, rgba(255,255,255,0.22) 0 1px, transparent 2px) 8% 18% / 140px 140px,
-                radial-gradient(circle, rgba(255,255,255,0.16) 0 1px, transparent 2px) 62% 34% / 190px 190px,
-                radial-gradient(circle, rgba(255,255,255,0.12) 0 1px, transparent 2px) 86% 68% / 120px 120px;
-            opacity: 0.5;
-            animation: bubbles 13s linear infinite;
+                linear-gradient(rgba(36, 229, 221, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(36, 229, 221, 0.08) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(5, 48, 68, 0), rgba(3, 16, 27, 0.86));
+            background-size: 80px 36px, 80px 36px, auto;
+            transform: perspective(420px) rotateX(58deg) translateY(44px);
+            transform-origin: bottom center;
+            animation: sea-grid 7s linear infinite;
         }
 
         .scene {
@@ -67,29 +72,199 @@ if (!headers_sent()) {
             min-height: 100vh;
             display: grid;
             place-items: center;
-            padding: 28px;
+            padding: 26px;
             isolation: isolate;
+        }
+
+        .horizon {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 56%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(36, 229, 221, 0.72), transparent);
+            box-shadow: 0 0 26px rgba(36, 229, 221, 0.45);
+            z-index: 0;
+        }
+
+        .ship {
+            position: absolute;
+            right: -18vw;
+            top: clamp(64px, 13vh, 150px);
+            width: clamp(120px, 18vw, 240px);
+            height: clamp(42px, 6vw, 84px);
+            z-index: 2;
+            animation: ship-pass 6.6s cubic-bezier(.45,.02,.55,.95) infinite;
+        }
+
+        .ship::before {
+            content: "";
+            position: absolute;
+            inset: 10% 0 18%;
+            clip-path: polygon(0 50%, 14% 24%, 48% 0, 82% 18%, 100% 52%, 78% 78%, 38% 100%, 13% 78%);
+            background: linear-gradient(135deg, #d9e8f7 0%, #8296aa 42%, #27384a 100%);
+            box-shadow: 0 0 22px rgba(255,255,255,0.18);
+        }
+
+        .ship::after {
+            content: "";
+            position: absolute;
+            right: 88%;
+            top: 43%;
+            width: 42%;
+            height: 14%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, rgba(255, 200, 90, 0.92));
+            filter: blur(1px);
+        }
+
+        .platform {
+            position: absolute;
+            left: clamp(20px, 9vw, 140px);
+            bottom: clamp(72px, 14vh, 155px);
+            width: clamp(180px, 25vw, 340px);
+            height: clamp(86px, 13vw, 172px);
+            z-index: 2;
+        }
+
+        .island {
+            position: absolute;
+            left: 0;
+            right: 10%;
+            bottom: 0;
+            height: 32%;
+            clip-path: polygon(0 100%, 10% 38%, 30% 26%, 48% 0, 72% 28%, 88% 44%, 100% 100%);
+            background: linear-gradient(180deg, #183145, #07121e);
+            border-bottom: 1px solid rgba(36, 229, 221, 0.35);
+        }
+
+        .tower {
+            position: absolute;
+            left: 39%;
+            bottom: 18%;
+            width: 24%;
+            height: 88%;
+            transform-origin: bottom center;
+            animation: tower-wake 6.6s ease-in-out infinite;
+        }
+
+        .tower-core {
+            position: absolute;
+            left: 34%;
+            bottom: 0;
+            width: 32%;
+            height: 100%;
+            clip-path: polygon(28% 0, 72% 0, 100% 100%, 0 100%);
+            background: linear-gradient(180deg, #1d5661, #0a1a2a 72%);
+            border: 1px solid rgba(101, 255, 183, 0.34);
+            box-shadow: inset 0 0 24px rgba(36, 229, 221, 0.18);
+        }
+
+        .tower-arm {
+            position: absolute;
+            left: 24%;
+            top: 10%;
+            width: 52%;
+            height: 30%;
+            transform-origin: bottom center;
+        }
+
+        .tower-arm::before,
+        .tower-arm::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            width: 46%;
+            height: 100%;
+            background: linear-gradient(180deg, #27727b, #0a1c2d);
+            border: 1px solid rgba(101, 255, 183, 0.36);
+            box-shadow: 0 0 18px rgba(36, 229, 221, 0.16);
+            animation: arms-open 6.6s ease-in-out infinite;
+        }
+
+        .tower-arm::before {
+            left: 0;
+            clip-path: polygon(100% 0, 24% 16%, 0 100%, 100% 100%);
+            transform-origin: right bottom;
+        }
+
+        .tower-arm::after {
+            right: 0;
+            clip-path: polygon(0 0, 76% 16%, 100% 100%, 0 100%);
+            transform-origin: left bottom;
+        }
+
+        .tower-charge {
+            position: absolute;
+            left: 50%;
+            top: 6%;
+            width: 18px;
+            height: 18px;
+            margin-left: -9px;
+            border-radius: 999px;
+            background: #d8fff2;
+            box-shadow:
+                0 0 18px var(--green),
+                0 0 54px var(--aqua),
+                0 0 96px rgba(101, 255, 183, 0.44);
+            opacity: 0;
+            animation: tower-charge 6.6s ease-in-out infinite;
+        }
+
+        .beam {
+            position: absolute;
+            left: clamp(160px, 24vw, 360px);
+            top: clamp(104px, 20vh, 210px);
+            width: 62vw;
+            height: 7px;
+            border-radius: 999px;
+            transform: rotate(-18deg);
+            transform-origin: left center;
+            background: linear-gradient(90deg, #f4fffb, var(--green), var(--aqua), transparent);
+            box-shadow:
+                0 0 18px var(--green),
+                0 0 52px var(--aqua),
+                0 0 90px rgba(101, 255, 183, 0.48);
+            opacity: 0;
+            z-index: 1;
+            animation: beam-fire 6.6s ease-in-out infinite;
+        }
+
+        .shockwave {
+            position: absolute;
+            right: clamp(72px, 20vw, 330px);
+            top: clamp(82px, 16vh, 168px);
+            width: 60px;
+            height: 60px;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 232, 160, 0.88);
+            background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(101,255,183,0.4) 28%, transparent 66%);
+            box-shadow: 0 0 34px rgba(255, 200, 90, 0.92);
+            opacity: 0;
+            z-index: 2;
+            animation: impact 6.6s ease-in-out infinite;
         }
 
         .maintenance-card {
             position: relative;
             width: min(760px, 100%);
+            margin-top: clamp(46px, 9vh, 110px);
             padding: clamp(24px, 4vw, 42px);
-            border: 1px solid rgba(74, 163, 255, 0.34);
+            border: 1px solid rgba(36, 229, 221, 0.32);
             border-radius: 10px;
-            background: linear-gradient(145deg, rgba(4, 18, 35, 0.94), var(--panel));
+            background: linear-gradient(145deg, rgba(3, 14, 27, 0.95), var(--panel));
             box-shadow:
-                0 30px 90px rgba(0, 0, 0, 0.44),
-                inset 0 0 40px rgba(39, 215, 232, 0.06);
+                0 30px 90px rgba(0, 0, 0, 0.46),
+                inset 0 0 44px rgba(36, 229, 221, 0.08);
             text-align: center;
-            z-index: 3;
+            z-index: 4;
         }
 
         .maintenance-card::before {
             content: "";
             position: absolute;
             inset: 10px;
-            border: 1px solid rgba(39, 215, 232, 0.2);
+            border: 1px solid rgba(101, 255, 183, 0.22);
             border-radius: 7px;
             pointer-events: none;
         }
@@ -100,10 +275,10 @@ if (!headers_sent()) {
             gap: 10px;
             margin-bottom: 18px;
             padding: 8px 14px;
-            border: 1px solid rgba(245, 196, 90, 0.45);
+            border: 1px solid rgba(255, 200, 90, 0.46);
             border-radius: 999px;
-            color: #ffe3a3;
-            background: rgba(245, 196, 90, 0.1);
+            color: #ffe6ad;
+            background: rgba(255, 200, 90, 0.1);
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.14em;
@@ -127,7 +302,7 @@ if (!headers_sent()) {
         }
 
         p {
-            max-width: 560px;
+            max-width: 580px;
             margin: 0 auto;
             color: var(--muted);
             font-size: 16px;
@@ -138,121 +313,57 @@ if (!headers_sent()) {
             width: min(460px, 82%);
             height: 2px;
             margin: 28px auto 0;
-            background: linear-gradient(90deg, transparent, var(--cyan), var(--blue), transparent);
-            box-shadow: 0 0 24px rgba(39, 215, 232, 0.65);
+            background: linear-gradient(90deg, transparent, var(--green), var(--aqua), transparent);
+            box-shadow: 0 0 24px rgba(36, 229, 221, 0.72);
             animation: scan 2.2s ease-in-out infinite;
         }
 
-        .railgun {
-            position: absolute;
-            left: clamp(18px, 7vw, 120px);
-            bottom: clamp(60px, 12vh, 150px);
-            width: clamp(150px, 22vw, 310px);
-            height: clamp(54px, 8vw, 88px);
-            z-index: 2;
-        }
-
-        .railgun::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 42%;
-            height: 58%;
-            border-radius: 6px 16px 10px 6px;
-            background: linear-gradient(135deg, #17324d, #081828);
-            border: 1px solid rgba(74, 163, 255, 0.35);
-            box-shadow: inset 0 0 18px rgba(39, 215, 232, 0.14);
-        }
-
-        .barrel {
-            position: absolute;
-            left: 30%;
-            top: 26%;
-            width: 70%;
-            height: 15%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #284d6d, #75dff0 52%, #15304b);
-            box-shadow: 0 0 18px rgba(39, 215, 232, 0.45);
-        }
-
-        .charge {
-            position: absolute;
-            right: 2%;
-            top: 10%;
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            background: var(--cyan);
-            box-shadow: 0 0 28px var(--cyan), 0 0 58px var(--blue);
-            animation: charge 3s ease-in-out infinite;
-        }
-
-        .beam {
-            position: absolute;
-            left: 22%;
-            right: 18%;
-            top: 54%;
-            height: 4px;
-            z-index: 1;
-            transform: rotate(-12deg);
-            transform-origin: left center;
-            background: linear-gradient(90deg, transparent, #eaffff, var(--cyan), transparent);
-            box-shadow: 0 0 16px var(--cyan), 0 0 46px var(--blue);
-            opacity: 0;
-            animation: fire 3s ease-in-out infinite;
-        }
-
-        .ship {
-            position: absolute;
-            right: clamp(24px, 10vw, 160px);
-            top: clamp(76px, 18vh, 180px);
-            width: clamp(92px, 15vw, 190px);
-            height: clamp(38px, 6vw, 72px);
-            z-index: 1;
-            animation: incoming 7s ease-in-out infinite;
-        }
-
-        .ship::before {
-            content: "";
-            position: absolute;
-            inset: 14% 0 16%;
-            clip-path: polygon(0 50%, 22% 12%, 76% 0, 100% 50%, 76% 100%, 22% 88%);
-            background: linear-gradient(135deg, #c7d7e8, #4c647c 60%, #152438);
-            box-shadow: 0 0 24px rgba(255,255,255,0.14);
-        }
-
-        .ship::after {
-            content: "";
-            position: absolute;
-            right: 86%;
-            top: 42%;
-            width: 44%;
-            height: 16%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, transparent, rgba(245, 196, 90, 0.82));
-            filter: blur(1px);
-        }
-
-        .impact {
-            position: absolute;
-            right: clamp(82px, 15vw, 240px);
-            top: clamp(104px, 22vh, 215px);
-            width: 46px;
-            height: 46px;
-            border-radius: 999px;
-            border: 2px solid rgba(245, 196, 90, 0.86);
-            box-shadow: 0 0 26px rgba(245, 196, 90, 0.9);
-            opacity: 0;
-            animation: impact 3s ease-in-out infinite;
-        }
-
-        @keyframes grid-drift {
-            to { background-position: 0 72px, 72px 0; }
-        }
-
-        @keyframes bubbles {
+        @keyframes particles {
             to { transform: translateY(-120px); }
+        }
+
+        @keyframes sea-grid {
+            to { background-position: 0 36px, 80px 36px, 0 0; }
+        }
+
+        @keyframes ship-pass {
+            0% { transform: translate(0, 0) rotate(-7deg); opacity: 0; }
+            14% { opacity: 1; }
+            62% { transform: translate(-54vw, 15vh) rotate(-5deg); opacity: 1; }
+            67% { transform: translate(-56vw, 16vh) rotate(-2deg) scale(1.04); opacity: 1; }
+            76% { transform: translate(-58vw, 17vh) rotate(4deg) scale(0.96); opacity: 0; }
+            100% { transform: translate(-62vw, 20vh) rotate(8deg); opacity: 0; }
+        }
+
+        @keyframes tower-wake {
+            0%, 30%, 100% { transform: translateY(16px); }
+            45%, 78% { transform: translateY(0); }
+        }
+
+        @keyframes arms-open {
+            0%, 38%, 100% { transform: rotate(0deg); }
+            50%, 78% { transform: rotate(var(--arm-rotation, 18deg)); }
+        }
+
+        .tower-arm::before { --arm-rotation: -26deg; }
+        .tower-arm::after { --arm-rotation: 26deg; }
+
+        @keyframes tower-charge {
+            0%, 38%, 100% { opacity: 0; transform: scale(0.2); }
+            54% { opacity: 0.7; transform: scale(0.85); }
+            62% { opacity: 1; transform: scale(1.25); }
+            72% { opacity: 0.35; transform: scale(0.55); }
+        }
+
+        @keyframes beam-fire {
+            0%, 62%, 71%, 100% { opacity: 0; }
+            64%, 67% { opacity: 1; }
+        }
+
+        @keyframes impact {
+            0%, 63%, 100% { opacity: 0; transform: scale(0.15); }
+            67% { opacity: 1; transform: scale(1.2); }
+            78% { opacity: 0; transform: scale(3.1); }
         }
 
         @keyframes blink {
@@ -263,37 +374,16 @@ if (!headers_sent()) {
             50% { width: min(560px, 94%); opacity: 0.64; }
         }
 
-        @keyframes charge {
-            0%, 54%, 100% { transform: scale(0.42); opacity: 0.3; }
-            70% { transform: scale(1.18); opacity: 1; }
-        }
-
-        @keyframes fire {
-            0%, 68%, 78%, 100% { opacity: 0; }
-            70%, 74% { opacity: 1; }
-        }
-
-        @keyframes impact {
-            0%, 70%, 100% { opacity: 0; transform: scale(0.2); }
-            76% { opacity: 1; transform: scale(1.4); }
-            86% { opacity: 0; transform: scale(2.4); }
-        }
-
-        @keyframes incoming {
-            0%, 100% { transform: translate(0, 0) rotate(-7deg); }
-            50% { transform: translate(-18px, 12px) rotate(-4deg); }
-        }
-
-        @media (max-width: 720px) {
-            .railgun,
+        @media (max-width: 760px) {
+            .platform,
             .ship,
             .beam,
-            .impact {
-                opacity: 0.58;
+            .shockwave {
+                opacity: 0.62;
             }
 
             .maintenance-card {
-                margin-top: 38px;
+                margin-top: 80px;
             }
         }
 
@@ -309,19 +399,24 @@ if (!headers_sent()) {
 </head>
 <body>
     <div class="scene">
+        <div class="horizon" aria-hidden="true"></div>
         <div class="ship" aria-hidden="true"></div>
-        <div class="impact" aria-hidden="true"></div>
         <div class="beam" aria-hidden="true"></div>
-        <div class="railgun" aria-hidden="true">
-            <div class="barrel"></div>
-            <div class="charge"></div>
+        <div class="shockwave" aria-hidden="true"></div>
+        <div class="platform" aria-hidden="true">
+            <div class="island"></div>
+            <div class="tower">
+                <div class="tower-core"></div>
+                <div class="tower-arm"></div>
+                <div class="tower-charge"></div>
+            </div>
         </div>
 
         <main class="maintenance-card">
             <div class="status-chip"><span class="status-dot"></span> Database link interrupted</div>
             <h1>We are maintaining the system</h1>
             <p>
-                The database is temporarily unavailable while our defense systems stabilize the connection.
+                The database beacon is temporarily offline while the defense platform stabilizes the connection.
                 Please come back in a few minutes.
             </p>
             <div class="system-line" aria-hidden="true"></div>
