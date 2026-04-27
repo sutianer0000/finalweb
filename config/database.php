@@ -14,6 +14,23 @@ define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 define('DB_NAME', getenv('DB_NAME') ?: 'ewallet');
 
+function renderDatabaseMaintenancePage(Throwable $e): void {
+    error_log('[db] connect failed: ' . $e->getMessage());
+
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, "Database connection failed. The service is temporarily under maintenance.\n");
+        exit(1);
+    }
+
+    if (!headers_sent()) {
+        http_response_code(503);
+        header('Retry-After: 300');
+    }
+
+    require __DIR__ . '/../maintenance.php';
+    exit;
+}
+
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {
@@ -30,8 +47,7 @@ function getDB() {
                 ]
             );
         } catch (PDOException $e) {
-            error_log("[db] connect failed (host=" . DB_HOST . " db=" . DB_NAME . " user=" . DB_USER . "): " . $e->getMessage());
-            die("Database connection failed. Check config/local.php and that MySQL is running.");
+            renderDatabaseMaintenancePage($e);
         }
     }
     return $pdo;

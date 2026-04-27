@@ -194,6 +194,10 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', $__baseUrl !== false ? $__baseUrl : '');
 }
 
+const REMEMBER_ME_COOKIE = 'EWALLET_REMEMBER';
+const REMEMBER_ME_DAYS = 30;
+const OPERATION_TOKEN_TTL_SECONDS = 1800;
+
 // Check if user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
@@ -303,6 +307,319 @@ function getFlash() {
         return $flash;
     }
     return null;
+}
+
+// CSRF helpers for state-changing forms.
+function csrfToken(): string {
+    if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function csrfField(): string {
+    return '<input type="hidden" name="csrf_token" value="' . sanitize(csrfToken()) . '">';
+}
+
+function verifyCsrfToken(?string $token): bool {
+    $sessionToken = $_SESSION['csrf_token'] ?? '';
+    return is_string($sessionToken)
+        && is_string($token)
+        && $sessionToken !== ''
+        && hash_equals($sessionToken, $token);
+}
+
+function currentRequestPath(): string {
+    $uri = $_SERVER['REQUEST_URI'] ?? (BASE_URL . '/dashboard.php');
+    if (!is_string($uri) || $uri === '' || str_starts_with($uri, '//') || preg_match('#^[a-z][a-z0-9+.-]*:#i', $uri)) {
+        return BASE_URL . '/dashboard.php';
+    }
+
+    return $uri;
+}
+
+function requireCsrfToken(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        logActivity('csrf_validation_failed', [
+            'entity_type' => 'security',
+            'details' => [
+                'path' => currentRequestPath(),
+                'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+                'has_token' => isset($_POST['csrf_token']),
+            ],
+        ]);
+        setFlash('error', 'Security check failed. Please submit the form again.');
+        redirect(currentRequestPath());
+    }
+}
+
+function secureCookieEnabled(): bool {
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+}
+
+function setAppCookie(string $name, string $value, int $expires): void {
+    setcookie($name, $value, [
+        'expires' => $expires,
+        'path' => '/',
+        'secure' => secureCookieEnabled(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function clearAppCookie(string $name): void {
+    setAppCookie($name, '', time() - 42000);
+}
+
+function ensureRememberTokensTable(): void {
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+
+    getDB()->exec("
+        CREATE TABLE IF NOT EXISTS remember_tokens (
+            selector VARCHAR(32) PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            last_used_at DATETIME DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            ip_address VARCHAR(45) DEFAULT NULL,
+            user_agent VARCHAR(255) DEFAULT NULL,
+            INDEX idx_remember_user (user_id),
+            INDEX idx_remember_expires (expires_at)
+        ) ENGINE=InnoDB
+    ");
+
+    $checked = true;
+}
+
+function rememberCookieValue(string $selector, string $validator): string {
+    return $selector . ':' . $validator;
+}
+
+function issueRememberMeToken(int $userId): void {
+    ensureRememberTokensTable();
+
+    $selector = bin2hex(random_bytes(12));
+    $validator = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $validator);
+    $expiresAtUnix = time() + (REMEMBER_ME_DAYS * 86400);
+    $expiresAt = date('Y-m-d H:i:s', $expiresAtUnix);
+
+    $stmt = getDB()->prepare("
+        INSERT INTO remember_tokens (
+            selector, user_id, token_hash, expires_at, ip_address, user_agent
+        ) VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([
+        $selector,
+        $userId,
+        $tokenHash,
+        $expiresAt,
+        $_SERVER['REMOTE_ADDR'] ?? null,
+        substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+    ]);
+
+    setAppCookie(REMEMBER_ME_COOKIE, rememberCookieValue($selector, $validator), $expiresAtUnix);
+}
+
+function revokeRememberTokenBySelector(string $selector): void {
+    if ($selector === '') {
+        return;
+    }
+
+    ensureRememberTokensTable();
+    $stmt = getDB()->prepare("DELETE FROM remember_tokens WHERE selector = ?");
+    $stmt->execute([$selector]);
+}
+
+function revokeCurrentRememberMeToken(): void {
+    $cookie = $_COOKIE[REMEMBER_ME_COOKIE] ?? '';
+    if (is_string($cookie) && str_contains($cookie, ':')) {
+        [$selector] = explode(':', $cookie, 2);
+        revokeRememberTokenBySelector($selector);
+    }
+
+    clearAppCookie(REMEMBER_ME_COOKIE);
+}
+
+function revokeRememberTokensForUser(int $userId): void {
+    ensureRememberTokensTable();
+    $stmt = getDB()->prepare("DELETE FROM remember_tokens WHERE user_id = ?");
+    $stmt->execute([$userId]);
+}
+
+function attemptRememberMeLogin(): void {
+    if (isLoggedIn()) {
+        return;
+    }
+
+    $cookie = $_COOKIE[REMEMBER_ME_COOKIE] ?? '';
+    if (!is_string($cookie) || !str_contains($cookie, ':')) {
+        return;
+    }
+
+    [$selector, $validator] = explode(':', $cookie, 2);
+    if (
+        !preg_match('/^[a-f0-9]{24}$/', $selector)
+        || !preg_match('/^[a-f0-9]{64}$/', $validator)
+    ) {
+        clearAppCookie(REMEMBER_ME_COOKIE);
+        return;
+    }
+
+    ensureRememberTokensTable();
+    $stmt = getDB()->prepare("
+        SELECT rt.selector, rt.user_id, rt.token_hash,
+               u.email, u.role, u.status, u.permanently_locked
+        FROM remember_tokens rt
+        INNER JOIN users u ON u.id = rt.user_id
+        WHERE rt.selector = ?
+          AND rt.expires_at > NOW()
+        LIMIT 1
+    ");
+    $stmt->execute([$selector]);
+    $token = $stmt->fetch();
+
+    if (!$token || !hash_equals($token['token_hash'], hash('sha256', $validator))) {
+        revokeRememberTokenBySelector($selector);
+        clearAppCookie(REMEMBER_ME_COOKIE);
+        logActivity('remember_login_failed', [
+            'entity_type' => 'auth',
+            'details' => ['selector' => $selector],
+        ]);
+        return;
+    }
+
+    if ($token['status'] === 'disabled' || (int) $token['permanently_locked'] === 1) {
+        revokeRememberTokenBySelector($selector);
+        clearAppCookie(REMEMBER_ME_COOKIE);
+        return;
+    }
+
+    session_regenerate_id(true);
+    $_SESSION['user_id'] = (int) $token['user_id'];
+
+    $newValidator = bin2hex(random_bytes(32));
+    $newHash = hash('sha256', $newValidator);
+    $expiresAtUnix = time() + (REMEMBER_ME_DAYS * 86400);
+    $expiresAt = date('Y-m-d H:i:s', $expiresAtUnix);
+
+    $stmt = getDB()->prepare("
+        UPDATE remember_tokens
+        SET token_hash = ?, expires_at = ?, last_used_at = NOW(),
+            ip_address = ?, user_agent = ?
+        WHERE selector = ?
+    ");
+    $stmt->execute([
+        $newHash,
+        $expiresAt,
+        $_SERVER['REMOTE_ADDR'] ?? null,
+        substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+        $selector,
+    ]);
+
+    setAppCookie(REMEMBER_ME_COOKIE, rememberCookieValue($selector, $newValidator), $expiresAtUnix);
+
+    logActivity('remember_login_success', [
+        'actor_user_id' => (int) $token['user_id'],
+        'actor_email' => $token['email'],
+        'actor_role' => $token['role'],
+        'target_user_id' => (int) $token['user_id'],
+        'target_email' => $token['email'],
+        'entity_type' => 'auth',
+    ]);
+}
+
+function ensureIdempotencyTokensTable(): void {
+    static $checked = false;
+    if ($checked) {
+        return;
+    }
+
+    getDB()->exec("
+        CREATE TABLE IF NOT EXISTS idempotency_tokens (
+            token CHAR(64) PRIMARY KEY,
+            user_id INT NOT NULL,
+            purpose VARCHAR(60) NOT NULL,
+            consumed_at DATETIME DEFAULT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_idempotency_user_purpose (user_id, purpose),
+            INDEX idx_idempotency_expires (expires_at)
+        ) ENGINE=InnoDB
+    ");
+
+    $checked = true;
+}
+
+attemptRememberMeLogin();
+
+function issueIdempotencyToken(string $purpose): string {
+    if (!isLoggedIn()) {
+        return '';
+    }
+
+    ensureIdempotencyTokensTable();
+    $token = bin2hex(random_bytes(32));
+    $expiresAt = date('Y-m-d H:i:s', time() + OPERATION_TOKEN_TTL_SECONDS);
+
+    $stmt = getDB()->prepare("
+        INSERT INTO idempotency_tokens (token, user_id, purpose, expires_at)
+        VALUES (?, ?, ?, ?)
+    ");
+    $stmt->execute([$token, (int) $_SESSION['user_id'], $purpose, $expiresAt]);
+
+    getDB()->prepare("DELETE FROM idempotency_tokens WHERE expires_at <= NOW()")->execute();
+
+    return $token;
+}
+
+function idempotencyField(string $purpose): string {
+    return '<input type="hidden" name="idempotency_token" value="' . sanitize(issueIdempotencyToken($purpose)) . '">';
+}
+
+function consumeIdempotencyToken(string $purpose): bool {
+    $token = $_POST['idempotency_token'] ?? '';
+    if (!isLoggedIn() || !is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) {
+        return false;
+    }
+
+    ensureIdempotencyTokensTable();
+    $stmt = getDB()->prepare("
+        UPDATE idempotency_tokens
+        SET consumed_at = NOW()
+        WHERE token = ?
+          AND user_id = ?
+          AND purpose = ?
+          AND consumed_at IS NULL
+          AND expires_at > NOW()
+    ");
+    $stmt->execute([$token, (int) $_SESSION['user_id'], $purpose]);
+
+    return $stmt->rowCount() === 1;
+}
+
+function requireIdempotencyToken(string $purpose): void {
+    if (!consumeIdempotencyToken($purpose)) {
+        logActivity('idempotency_replay_blocked', [
+            'entity_type' => 'security',
+            'details' => [
+                'purpose' => $purpose,
+                'path' => currentRequestPath(),
+            ],
+        ]);
+        setFlash('warning', 'This request was already submitted or has expired. Please try again.');
+        redirect(strtok(currentRequestPath(), '?') ?: currentRequestPath());
+    }
 }
 
 // Format currency

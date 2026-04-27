@@ -15,6 +15,8 @@ $statusOptions = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $action = $_POST['action'] ?? '';
 
     if ($action === 'update_access') {
@@ -36,6 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $db->prepare("UPDATE users SET role = ?, status = ? WHERE id = ?")
                     ->execute([$newRole, $newStatus, $targetUserId]);
+                revokeRememberTokensForUser($targetUserId);
+                if ($targetUserId === (int) $currentUser['id']) {
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = $currentUser['id'];
+                }
                 logActivity('superadmin_updated_account_access', [
                     'target_user_id' => $targetUserId,
                     'target_email' => $target['email'],
@@ -189,6 +196,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <td class="mono"><?= sanitize(formatSuperadminTime($account['last_seen_at'])) ?></td>
                                     <td>
                                         <form method="POST" class="superadmin-access-form">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="update_access">
                                             <input type="hidden" name="user_id" value="<?= (int) $account['id'] ?>">
                                             <input type="hidden" name="return_q" value="<?= sanitize($query) ?>">

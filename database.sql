@@ -180,6 +180,34 @@ CREATE TABLE app_sessions (
 ) ENGINE=InnoDB;
 
 -- =====================================================
+-- REMEMBER ME TOKENS (persistent login cookies)
+-- =====================================================
+CREATE TABLE remember_tokens (
+    selector VARCHAR(32) PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    last_used_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    user_agent VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =====================================================
+-- IDEMPOTENCY TOKENS (one-time money action guards)
+-- =====================================================
+CREATE TABLE idempotency_tokens (
+    token CHAR(64) PRIMARY KEY,
+    user_id INT NOT NULL,
+    purpose VARCHAR(60) NOT NULL,
+    consumed_at DATETIME DEFAULT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- ACTIVITY LOGS TABLE (superadmin audit trail)
 -- =====================================================
 CREATE TABLE activity_logs (
@@ -231,10 +259,10 @@ VALUES (
 );
 
 -- Credit cards (simulated)
-INSERT INTO credit_cards (card_number, expiration_date, cvv, max_amount_per_deposit, always_fail, note) VALUES
-('111111', '10/10/2022', '411', NULL, 0, 'No limit on recharges or amount per deposit. Also used for withdrawals.'),
-('222222', '11/11/2022', '443', 1000000.00, 0, 'No limit on recharges but max 1,000,000 VND per deposit.'),
-('333333', '12/12/2022', '577', NULL, 1, 'Always returns "card is out of money".');
+INSERT INTO credit_cards (card_number, expiration_date, cvv, card_type, max_amount_per_deposit, always_fail, note) VALUES
+('111111', '10/10/2022', '411', 'both', NULL, 0, 'No limit on recharges or amount per deposit. Also used for withdrawals.'),
+('222222', '11/11/2022', '443', 'deposit', 1000000.00, 0, 'No limit on recharges but max 1,000,000 VND per deposit.'),
+('333333', '12/12/2022', '577', 'deposit', NULL, 1, 'Always returns "card is out of money".');
 
 -- =====================================================
 -- INDEXES FOR PERFORMANCE
@@ -246,6 +274,7 @@ CREATE INDEX idx_transactions_status ON transactions(status);
 CREATE INDEX idx_transactions_type ON transactions(type);
 CREATE INDEX idx_transactions_created ON transactions(created_at);
 CREATE INDEX idx_otp_user ON otp_codes(user_id);
+CREATE INDEX idx_otp_user_purpose_created ON otp_codes(user_id, purpose, created_at);
 CREATE INDEX idx_phone_cards_transaction ON phone_cards(transaction_id);
 CREATE INDEX idx_login_history_user ON login_history(user_id);
 CREATE INDEX idx_notif_user ON notifications(user_id);
@@ -257,6 +286,10 @@ CREATE INDEX idx_notif_broadcast_created ON notifications(is_broadcast, broadcas
 CREATE INDEX idx_app_sessions_expires ON app_sessions(expires_at);
 CREATE INDEX idx_app_sessions_user ON app_sessions(user_id);
 CREATE INDEX idx_app_sessions_last_seen ON app_sessions(last_seen_at);
+CREATE INDEX idx_remember_user ON remember_tokens(user_id);
+CREATE INDEX idx_remember_expires ON remember_tokens(expires_at);
+CREATE INDEX idx_idempotency_user_purpose ON idempotency_tokens(user_id, purpose);
+CREATE INDEX idx_idempotency_expires ON idempotency_tokens(expires_at);
 CREATE INDEX idx_activity_actor ON activity_logs(actor_user_id);
 CREATE INDEX idx_activity_target ON activity_logs(target_user_id);
 CREATE INDEX idx_activity_actor_email ON activity_logs(actor_email);

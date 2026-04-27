@@ -17,6 +17,8 @@ if (isLoggedIn()) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $db = getDB();
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -83,6 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Set session
                     session_regenerate_id(true);
                     $_SESSION['user_id'] = $user['id'];
+                    if (!empty($_POST['remember'])) {
+                        issueRememberMeToken((int) $user['id']);
+                    } else {
+                        revokeCurrentRememberMeToken();
+                    }
                     logActivity('login_success', [
                         'actor_user_id' => $user['id'],
                         'actor_email' => $user['email'],
@@ -184,6 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
 
                     <form method="POST" novalidate>
+                        <?= csrfField() ?>
 
                         <!-- USERNAME -->
                         <div class="mb-4">
@@ -220,7 +228,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <!-- OPTIONS -->
                         <div class="d-flex justify-content-between align-items-center small">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" name="remember">
+                                <input type="checkbox" class="form-check-input" name="remember" value="1"
+                                    <?= !empty($_POST['remember']) ? 'checked' : '' ?>>
                                 <label class="form-check-label"><?= __("remember_me") ?></label>
                             </div>
                             <a href="<?= BASE_URL ?>/forgot_password.php" class="text-decoration-none">

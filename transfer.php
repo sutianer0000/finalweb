@@ -214,6 +214,9 @@ $note = trim($_POST['note'] ?? '');
 $feePayer = $_POST['fee_payer'] ?? 'sender';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'prepare') {
+    requireCsrfToken();
+    requireIdempotencyToken('transfer_prepare');
+
     $amount = normalizeTransferAmount($amountInput);
 
     if ($recipientPhone === '') {
@@ -260,6 +263,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'prepare
     }
 
     if (empty($errors)) {
+        $stmt = $db->prepare("
+            SELECT created_at
+            FROM otp_codes
+            WHERE user_id = ?
+              AND purpose = 'transfer_verification'
+              AND used = 0
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$user['id']]);
+        if ($stmt->fetch()) {
+            $errors[] = 'Please wait 1 minute before requesting another OTP.';
+        }
+    }
+
+    if (empty($errors)) {
+        $db->prepare("
+            UPDATE otp_codes
+            SET used = 1
+            WHERE user_id = ?
+              AND purpose = 'transfer_verification'
+              AND used = 0
+        ")->execute([$user['id']]);
+
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $db->prepare("
             INSERT INTO otp_codes (user_id, otp_code, purpose, expires_at)
@@ -268,6 +296,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'prepare
 
         $mailResult = sendTransferOtpEmail($user['email'], $user['full_name'], $otp, $recipient['full_name'], $amount);
         if (!$mailResult['ok']) {
+            $db->prepare("
+                UPDATE otp_codes
+                SET used = 1
+                WHERE user_id = ?
+                  AND purpose = 'transfer_verification'
+                  AND otp_code = ?
+                  AND used = 0
+            ")->execute([$user['id'], $otp]);
             $errors[] = 'Could not send OTP email. Please try again later.';
         } else {
             $_SESSION['transfer'] = [
@@ -281,6 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'prepare
                 'fee_payer' => $feePayer,
                 'note' => $note,
                 'created_at' => time(),
+                'otp_attempts' => 0,
             ];
             $step = 'verify';
             $info = 'OTP sent to your registered email. It expires in 1 minute.';
@@ -289,6 +326,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'prepare
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify') {
+    requireCsrfToken();
+    requireIdempotencyToken('transfer_verify');
+
     if (empty($_SESSION['transfer']) || ($_SESSION['transfer']['stage'] ?? '') !== 'verify') {
         $errors[] = 'Transfer failed because the verification session expired. Please start a new transfer.';
         $step = 'done';
@@ -322,8 +362,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify'
             $otpRow = $stmt->fetch();
 
             if (!$otpRow) {
-                $errors[] = 'OTP is incorrect. Please try again before it expires.';
-                $step = 'verify';
+                $_SESSION['transfer']['otp_attempts'] = (int) ($_SESSION['transfer']['otp_attempts'] ?? 0) + 1;
+                if ($_SESSION['transfer']['otp_attempts'] >= 3) {
+                    $errors[] = 'Transfer failed because the OTP was entered incorrectly too many times. Please start a new transfer.';
+                    $failedTransfer = buildTransferFailureReceipt($transfer, $errors[0]);
+                    $step = 'done';
+                    unset($_SESSION['transfer']);
+                } else {
+                    $errors[] = 'OTP is incorrect. Please try again before it expires.';
+                    $step = 'verify';
+                }
             } else {
                 $stmt = $db->prepare("SELECT id, full_name, email, phone_number, balance, status FROM users WHERE id = ?");
                 $stmt->execute([$transfer['recipient_id']]);
@@ -606,6 +654,8 @@ require_once __DIR__ . '/includes/header.php';
                             Transfer failed because the OTP expired after 1 minute. Please start a new transfer.
                         </div>
                         <form method="POST" class="mt-4" novalidate>
+                            <?= csrfField() ?>
+                            <?= idempotencyField('transfer_verify') ?>
                             <input type="hidden" name="step" value="verify">
                             <label for="otp" class="form-label">OTP Code</label>
                             <div class="input-group">
@@ -619,6 +669,8 @@ require_once __DIR__ . '/includes/header.php';
                         </form>
                     <?php else: ?>
                         <form method="POST" novalidate>
+                            <?= csrfField() ?>
+                            <?= idempotencyField('transfer_prepare') ?>
                             <input type="hidden" name="step" value="prepare">
                             <div class="mb-3">
                                 <label for="recipient_phone" class="form-label">Recipient Phone Number</label>

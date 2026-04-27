@@ -132,7 +132,12 @@ if ($currentUser && $currentUser['role'] === 'user') {
                             <a class="nav-link" href="<?= BASE_URL ?>/change_password.php"><i class="bi bi-key"></i> Change Password</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?= BASE_URL ?>/logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                            <form method="POST" action="<?= BASE_URL ?>/logout.php" class="d-inline">
+                                <?= csrfField() ?>
+                                <button type="submit" class="nav-link btn btn-link border-0">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 <?php else: ?>

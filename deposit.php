@@ -50,6 +50,9 @@ $cvv = trim($_POST['cvv'] ?? '');
 $amountInput = trim($_POST['amount'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+    requireIdempotencyToken('deposit');
+
     $amount = normalizeDepositAmount($amountInput);
 
     if ($cardNumber === '') {
@@ -207,6 +210,8 @@ require_once __DIR__ . '/includes/header.php';
             <div class="col-lg-7">
                 <div class="hud-card sn-card">
                     <form method="POST" novalidate>
+                        <?= csrfField() ?>
+                        <?= idempotencyField('deposit') ?>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="card_number" class="form-label">Card Number</label>

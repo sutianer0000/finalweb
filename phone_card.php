@@ -37,6 +37,9 @@ $denomination = (int) ($_POST['denomination'] ?? 10000);
 $quantity = (int) ($_POST['quantity'] ?? 1);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+    requireIdempotencyToken('phone_card');
+
     if (!isset($carriers[$carrier])) {
         $errors[] = 'Please choose a valid carrier.';
     }
@@ -229,6 +232,8 @@ require_once __DIR__ . '/includes/header.php';
             <div class="col-lg-7">
                 <div class="hud-card sn-card">
                     <form method="POST" novalidate>
+                        <?= csrfField() ?>
+                        <?= idempotencyField('phone_card') ?>
                         <div class="mb-3">
                             <label for="carrier" class="form-label">Carrier</label>
                             <select class="form-select" id="carrier" name="carrier" required>

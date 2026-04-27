@@ -6,6 +6,8 @@ $user = getCurrentUser();
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $oldPassword     = $_POST['old_password'] ?? '';
     $newPassword     = $_POST['new_password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
@@ -36,7 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare("UPDATE users SET password = ? WHERE id = ?")
            ->execute([$hashed, $user['id']]);
 
-        // Keep user logged in — session already holds user_id, nothing to reset.
+        revokeRememberTokensForUser((int) $user['id']);
+        clearAppCookie(REMEMBER_ME_COOKIE);
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['id'];
         logActivity('user_changed_password', [
             'target_user_id' => $user['id'],
             'target_email' => $user['email'],
@@ -71,6 +76,7 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endif; ?>
 
                 <form method="POST" novalidate>
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label for="old_password" class="form-label">Current Password <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="old_password" name="old_password"

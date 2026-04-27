@@ -91,6 +91,11 @@ require_once __DIR__ . '/includes/header.php';
                             <dt>Fee Payer</dt>
                             <dd><?= sanitize($transaction['fee_payer'] ?: '-') ?></dd>
 
+                            <?php if (in_array($transaction['type'], ['deposit', 'withdraw'], true)): ?>
+                                <dt>Card Number</dt>
+                                <dd class="mono"><?= sanitize($transaction['card_number'] ?: '-') ?></dd>
+                            <?php endif; ?>
+
                             <dt>Related Account</dt>
                             <dd>
                                 <?php if ($transaction['related_name']): ?>

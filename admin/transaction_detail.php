@@ -58,6 +58,8 @@ function loadAdminTransaction(PDO $db, int $transactionId): ?array
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $action = $_POST['action'] ?? '';
     if (!in_array($action, ['approve_transfer', 'cancel_transfer', 'approve_withdraw', 'cancel_withdraw'], true)) {
         setFlash('error', 'Invalid transaction action.');
@@ -270,6 +272,11 @@ require_once __DIR__ . '/../includes/header.php';
                         <dt>Fee Payer</dt>
                         <dd><?= sanitize($transaction['fee_payer'] ?: '-') ?></dd>
 
+                        <?php if (in_array($transaction['type'], ['deposit', 'withdraw'], true)): ?>
+                            <dt>Card Number</dt>
+                            <dd class="mono"><?= sanitize($transaction['card_number'] ?: '-') ?></dd>
+                        <?php endif; ?>
+
                         <dt>Approval Rule</dt>
                         <dd><?= $isOverApprovalLimit ? 'Over 5,000,000 VND - admin approval required' : 'Not over approval limit' ?></dd>
 
@@ -327,6 +334,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="admin-panel-body">
                         <div class="d-flex gap-2 flex-wrap justify-content-end">
                             <form method="POST" onsubmit="return confirm('Approve this transaction and update account balances?');">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="transaction_id" value="<?= (int) $transaction['id'] ?>">
                                 <input type="hidden" name="action" value="<?= $canDecideTransfer ? 'approve_transfer' : 'approve_withdraw' ?>">
                                 <button type="submit" class="btn btn-primary">
@@ -334,6 +342,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 </button>
                             </form>
                             <form method="POST" onsubmit="return confirm('Disagree with this transaction? Its status will be cancelled.');">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="transaction_id" value="<?= (int) $transaction['id'] ?>">
                                 <input type="hidden" name="action" value="<?= $canDecideTransfer ? 'cancel_transfer' : 'cancel_withdraw' ?>">
                                 <button type="submit" class="btn btn-outline-secondary sn-btn-ghost">
