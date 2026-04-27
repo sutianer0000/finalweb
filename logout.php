@@ -1,12 +1,20 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    redirect(isLoggedIn() ? BASE_URL . '/dashboard.php' : BASE_URL . '/login.php');
+}
+
+requireCsrfToken();
+
 if (isLoggedIn()) {
     logActivity('logout', [
         'target_user_id' => $_SESSION['user_id'],
         'entity_type' => 'auth',
     ]);
 }
+
+revokeCurrentRememberMeToken();
 
 $_SESSION = [];
 

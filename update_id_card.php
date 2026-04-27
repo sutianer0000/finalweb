@@ -13,6 +13,8 @@ if ($user['status'] !== 'waiting_for_updates') {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $db = getDB();
 
     if (!isset($_FILES['id_card_front']) || $_FILES['id_card_front']['error'] !== UPLOAD_ERR_OK) {
@@ -105,6 +107,7 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endif; ?>
 
                 <form method="POST" enctype="multipart/form-data" novalidate>
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label for="id_card_front" class="form-label">ID Card - Front Photo <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="id_card_front" name="id_card_front" accept="image/*" required>

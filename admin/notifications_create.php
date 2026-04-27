@@ -9,6 +9,8 @@ $notificationTypes = getNotificationTypeOptions();
 $audienceGroups = getNotificationAudienceGroupOptions();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $recipient = $_POST['recipient'] ?? '';
     $title = trim($_POST['title'] ?? '');
     $message = trim($_POST['message'] ?? '');
@@ -111,6 +113,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="card-body">
                 <form method="POST" novalidate id="sendNotificationForm">
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label for="recipient" class="form-label">Recipient <span class="text-danger">*</span></label>
                         <select class="form-select" id="recipient" name="recipient" required>

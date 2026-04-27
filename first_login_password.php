@@ -13,6 +13,8 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $newPassword = $_POST['new_password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
@@ -31,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $db->prepare("UPDATE users SET password = ?, first_login = 0 WHERE id = ?");
         $stmt->execute([$hashedPassword, $user['id']]);
+        revokeRememberTokensForUser((int) $user['id']);
+        clearAppCookie(REMEMBER_ME_COOKIE);
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['id'];
         logActivity('user_completed_first_login_password', [
             'target_user_id' => $user['id'],
             'target_email' => $user['email'],
@@ -62,7 +68,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i>
                 This is your first login. You must change your password before you can use the system.
-                If you don't want to change your password now, you can <a href="<?= BASE_URL ?>/logout.php">log out</a>.
+                If you don't want to change your password now, use the log out button below.
             </div>
 
             <?php if (!empty($errors)): ?>
@@ -76,6 +82,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php endif; ?>
 
             <form method="POST" novalidate>
+                <?= csrfField() ?>
                 <div class="mb-3">
                     <label for="new_password" class="form-label">New Password</label>
                     <div class="input-group">
@@ -108,9 +115,12 @@ require_once __DIR__ . '/includes/header.php';
                     <button type="submit" class="btn btn-warning btn-lg">
                         <i class="bi bi-check-lg"></i> Change Password
                     </button>
-                    <a href="<?= BASE_URL ?>/logout.php" class="btn btn-outline-secondary">
-                        <i class="bi bi-box-arrow-right"></i> Log Out Instead
-                    </a>
+                    <form method="POST" action="<?= BASE_URL ?>/logout.php">
+                        <?= csrfField() ?>
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-box-arrow-right"></i> Log Out Instead
+                        </button>
+                    </form>
                 </div>
             </form>
         </div>

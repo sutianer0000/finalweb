@@ -14,6 +14,8 @@ $success = false;
 $credentials = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $db = getDB();
 
     // Collect and sanitize inputs
@@ -214,6 +216,7 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endif; ?>
 
                 <form method="POST" enctype="multipart/form-data" novalidate>
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label for="phone_number" class="form-label"><?= __("phone_number") ?> <span
                                 class="text-danger">*</span></label>

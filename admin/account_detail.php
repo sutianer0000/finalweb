@@ -25,6 +25,8 @@ if ($userId <= 0) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $action = $_POST['action'] ?? '';
 
     $stmt = $db->prepare("SELECT id, email, role, status FROM users WHERE id = ?");
@@ -38,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'verify') {
         $db->prepare("UPDATE users SET status = 'verified' WHERE id = ?")->execute([$userId]);
+        revokeRememberTokensForUser($userId);
         logActivity('admin_verified_user', [
             'target_user_id' => $userId,
             'target_email' => $target['email'],
@@ -48,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'Account has been verified.');
     } elseif ($action === 'cancel') {
         $db->prepare("UPDATE users SET status = 'disabled' WHERE id = ?")->execute([$userId]);
+        revokeRememberTokensForUser($userId);
         logActivity('admin_disabled_user', [
             'target_user_id' => $userId,
             'target_email' => $target['email'],
@@ -58,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'Account has been disabled.');
     } elseif ($action === 'request_update') {
         $db->prepare("UPDATE users SET status = 'waiting_for_updates' WHERE id = ?")->execute([$userId]);
+        revokeRememberTokensForUser($userId);
         logActivity('admin_requested_user_update', [
             'target_user_id' => $userId,
             'target_email' => $target['email'],
@@ -248,6 +253,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="admin-panel-body">
                     <div class="admin-actions">
                         <form method="POST" onsubmit="return confirm('Verify this account?');">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="verify">
                             <button type="submit" class="btn admin-action-btn is-verify">
                                 <i class="bi bi-patch-check"></i> Verify
@@ -255,6 +261,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </form>
 
                         <form method="POST" onsubmit="return confirm('Request the user to re-upload their ID card?');">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="request_update">
                             <button type="submit" class="btn admin-action-btn is-request">
                                 <i class="bi bi-pencil-square"></i> Request Update
@@ -262,6 +269,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </form>
 
                         <form method="POST" onsubmit="return confirm('Disable this account? The user will no longer be able to log in.');">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="cancel">
                             <button type="submit" class="btn admin-action-btn is-disable">
                                 <i class="bi bi-x-circle"></i> Disable

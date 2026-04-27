@@ -132,3 +132,60 @@ function sendPasswordResetOtp(string $toEmail, string $fullName, string $otp): a
 
     return sendMail($toEmail, $fullName, $subject, $html, $alt);
 }
+
+function sendTransferOtpEmail(string $toEmail, string $fullName, string $otp, string $recipientName, int $amount): array
+{
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeOtp = htmlspecialchars($otp, ENT_QUOTES, 'UTF-8');
+    $safeRecipient = htmlspecialchars($recipientName, ENT_QUOTES, 'UTF-8');
+    $safeAmount = htmlspecialchars(formatMoney($amount), ENT_QUOTES, 'UTF-8');
+
+    $subject = 'E-Wallet Transfer Verification - OTP Code';
+    $html = "
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px'>
+            <h2 style='color:#0d6efd;margin-top:0'>Transfer Verification</h2>
+            <p>Hi {$safeName}, enter this OTP code to confirm your transfer:</p>
+            <div style='font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;background:#f8f9fa;padding:16px;border-radius:6px;margin:16px 0'>{$safeOtp}</div>
+            <p>Recipient: <strong>{$safeRecipient}</strong></p>
+            <p>Amount: <strong>{$safeAmount}</strong></p>
+            <p>This code expires in 1 minute. If you did not request this transfer, please change your password immediately.</p>
+        </div>
+    ";
+    $alt = "Hi {$fullName},\n\n"
+        . "Your transfer OTP code is: {$otp}\n"
+        . "Recipient: {$recipientName}\n"
+        . "Amount: " . formatMoney($amount) . "\n\n"
+        . "This code expires in 1 minute.";
+
+    return sendMail($toEmail, $fullName, $subject, $html, $alt);
+}
+
+function sendTransferReceivedEmail(string $toEmail, string $fullName, string $senderName, int $amount, float $balanceAfter, string $note = ''): array
+{
+    $safeName = htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8');
+    $safeSender = htmlspecialchars($senderName, ENT_QUOTES, 'UTF-8');
+    $safeAmount = htmlspecialchars(formatMoney($amount), ENT_QUOTES, 'UTF-8');
+    $safeBalance = htmlspecialchars(formatMoney($balanceAfter), ENT_QUOTES, 'UTF-8');
+    $safeNote = nl2br(htmlspecialchars($note, ENT_QUOTES, 'UTF-8'));
+    $loginUrl = htmlspecialchars(appUrl('login.php'), ENT_QUOTES, 'UTF-8');
+
+    $subject = 'E-Wallet Transfer Received';
+    $html = "
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px'>
+            <h2 style='color:#0d6efd;margin-top:0'>You received money</h2>
+            <p>Hi {$safeName}, you received <strong>{$safeAmount}</strong> from <strong>{$safeSender}</strong>.</p>
+            <p>Your new balance is <strong>{$safeBalance}</strong>.</p>
+            " . ($safeNote !== '' ? "<p>Note:<br>{$safeNote}</p>" : '') . "
+            <p style='margin:24px 0 10px'>
+                <a href='{$loginUrl}' style='display:inline-block;padding:12px 20px;border-radius:999px;background:#0b1e3f;color:#ffffff;text-decoration:none;font-weight:600'>Open E-Wallet</a>
+            </p>
+        </div>
+    ";
+    $alt = "Hi {$fullName},\n\n"
+        . "You received " . formatMoney($amount) . " from {$senderName}.\n"
+        . "Your new balance is " . formatMoney($balanceAfter) . ".\n"
+        . ($note !== '' ? "Note: {$note}\n" : '')
+        . "Login: " . appUrl('login.php');
+
+    return sendMail($toEmail, $fullName, $subject, $html, $alt);
+}

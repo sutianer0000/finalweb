@@ -6,6 +6,8 @@ requireLogin();
 $user = getCurrentUser();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+
     $action = $_POST['action'] ?? '';
 
     if ($action === 'mark_all_read') {
@@ -58,6 +60,7 @@ require_once __DIR__ . '/includes/header.php';
         </a>
         <?php if ($unreadCount > 0): ?>
             <form method="POST" class="d-inline">
+                <?= csrfField() ?>
                 <input type="hidden" name="action" value="mark_all_read">
                 <button type="submit" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-check2-all"></i> Mark All Read
@@ -112,6 +115,7 @@ require_once __DIR__ . '/includes/header.php';
 
                         <?php if (!$n['is_read']): ?>
                             <form method="POST" class="d-inline">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="mark_read">
                                 <input type="hidden" name="notification_id" value="<?= (int) $n['id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-outline-primary">

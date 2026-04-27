@@ -29,6 +29,8 @@ $stage = $_SESSION['forgot']['stage'] ?? 'request';
 // STEP 1 — request OTP: user enters email or phone, we email an OTP
 // ------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request') {
+    requireCsrfToken();
+
     $identifier = trim($_POST['identifier'] ?? '');
 
     if ($identifier === '') {
@@ -43,6 +45,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
         } elseif ($user['status'] === 'disabled') {
             $errors[] = 'This account has been disabled, please contact the hotline 18001008.';
         } else {
+            $stmt = $db->prepare("
+                SELECT created_at
+                FROM otp_codes
+                WHERE user_id = ?
+                  AND purpose = 'password_reset'
+                  AND used = 0
+                  AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$user['id']]);
+
+            if ($stmt->fetch()) {
+                $errors[] = 'Please wait 1 minute before requesting another OTP.';
+            }
+        }
+
+        if (empty($errors) && !empty($user)) {
+            $db->prepare("
+                UPDATE otp_codes
+                SET used = 1
+                WHERE user_id = ?
+                  AND purpose = 'password_reset'
+                  AND used = 0
+            ")->execute([$user['id']]);
+
             // Generate 6-digit OTP, store in DB with 10-minute expiry.
             // Use MySQL's clock for expires_at so it matches NOW() used in the verify step.
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -55,6 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
             $result = sendPasswordResetOtp($user['email'], $user['full_name'], $otp);
 
             if (!$result['ok']) {
+                $db->prepare("
+                    UPDATE otp_codes
+                    SET used = 1
+                    WHERE user_id = ?
+                      AND purpose = 'password_reset'
+                      AND otp_code = ?
+                      AND used = 0
+                ")->execute([$user['id'], $otp]);
                 $errors[] = 'Could not send OTP email. Please try again later.';
             } else {
                 logActivity('password_reset_otp_requested', [
@@ -66,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
                     'stage'   => 'verify',
                     'user_id' => $user['id'],
                     'email'   => $user['email'],
+                    'otp_attempts' => 0,
                 ];
                 $stage = 'verify';
                 $info = 'We sent an OTP code to your registered email address.';
@@ -78,6 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
 // STEP 2 — verify OTP
 // ------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify') {
+    requireCsrfToken();
+
     if (empty($_SESSION['forgot']['user_id'])) {
         $stage = 'request';
         $errors[] = 'Session expired. Please request a new OTP.';
@@ -103,8 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify'
             $row = $stmt->fetch();
 
             if (!$row) {
-                $errors[] = 'Invalid or expired OTP code.';
-                $stage = 'verify';
+                $_SESSION['forgot']['otp_attempts'] = (int) ($_SESSION['forgot']['otp_attempts'] ?? 0) + 1;
+                if ($_SESSION['forgot']['otp_attempts'] >= 3) {
+                    unset($_SESSION['forgot']);
+                    $stage = 'request';
+                    $errors[] = 'Too many incorrect OTP attempts. Please request a new OTP.';
+                } else {
+                    $errors[] = 'Invalid or expired OTP code.';
+                    $stage = 'verify';
+                }
             } else {
                 $db->prepare("UPDATE otp_codes SET used = 1 WHERE id = ?")->execute([$row['id']]);
                 logActivity('password_reset_otp_verified', [
@@ -124,6 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'verify'
 // STEP 3 — set new password
 // ------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'reset') {
+    requireCsrfToken();
+
     if (empty($_SESSION['forgot']['user_id']) || ($_SESSION['forgot']['stage'] ?? '') !== 'reset') {
         $stage = 'request';
         $errors[] = 'Session expired. Please start over.';
@@ -143,6 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'reset')
             $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
             $db->prepare("UPDATE users SET password = ?, first_login = 0 WHERE id = ?")
                ->execute([$hashed, $userId]);
+            revokeRememberTokensForUser($userId);
             logActivity('password_reset_completed', [
                 'target_user_id' => $userId,
                 'target_email' => $_SESSION['forgot']['email'] ?? null,
@@ -193,6 +242,7 @@ require_once __DIR__ . '/includes/header.php';
                     Enter your registered email or phone number. We'll email you a one-time code to reset your password.
                 </p>
                 <form method="POST" novalidate>
+                    <?= csrfField() ?>
                     <input type="hidden" name="step" value="request">
                     <div class="mb-3">
                         <label for="identifier" class="form-label">Email or Phone Number</label>
@@ -213,6 +263,7 @@ require_once __DIR__ . '/includes/header.php';
                     <strong><?= sanitize($_SESSION['forgot']['email'] ?? '') ?></strong>.
                 </p>
                 <form method="POST" novalidate>
+                    <?= csrfField() ?>
                     <input type="hidden" name="step" value="verify">
                     <div class="mb-3">
                         <label for="otp" class="form-label">OTP Code</label>
@@ -235,6 +286,7 @@ require_once __DIR__ . '/includes/header.php';
             <?php elseif ($stage === 'reset'): ?>
                 <p class="text-muted">Enter a new password for your account.</p>
                 <form method="POST" novalidate>
+                    <?= csrfField() ?>
                     <input type="hidden" name="step" value="reset">
                     <div class="mb-3">
                         <label for="new_password" class="form-label">New Password</label>

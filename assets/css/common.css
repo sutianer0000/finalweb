@@ -425,6 +425,11 @@ a:hover {
     animation: sn-sonar-pulse 3.2s ease-in-out infinite;
 }
 
+.is-submit-locked {
+    cursor: wait !important;
+    opacity: 0.72;
+}
+
 @keyframes sn-hologram-scan {
     0% {
         transform: translateY(0);
