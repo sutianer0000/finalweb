@@ -59,6 +59,16 @@ $translations = [
         'from' => 'Từ',
         'broadcast' => 'Thông báo chung',
 
+        // Bug reports (user-facing)
+        'report_bug'                 => 'Báo lỗi',
+        'report_bug_intro'           => 'Bạn gặp sự cố hay điều gì đó khó hiểu? Hãy cho chúng tôi biết — chúng tôi sẽ kiểm tra và xử lý.',
+        'bug_title_label'            => 'Tiêu đề ngắn gọn',
+        'bug_description_label'      => 'Bạn đã gặp vấn đề gì?',
+        'bug_description_help'       => 'Càng cụ thể càng tốt. Mô tả các bước thực hiện, thông báo lỗi và những gì bạn thấy trên màn hình.',
+        'bug_send_to_dev'            => 'Gửi cho đội phát triển',
+        'bug_thanks'                 => 'Cảm ơn bạn! Báo cáo của bạn đã được gửi đến đội ngũ kỹ thuật và sẽ được xử lý sớm nhất có thể.',
+        'bug_report_another'         => 'Báo cáo lỗi khác',
+
         'dashboard_title' => 'Bảng điều khiển',
         'command_deck' => 'Bảng điều khiển',
         'welcome_user' => 'Chào mừng, %s!',
@@ -78,6 +88,7 @@ $translations = [
         'locked' => 'Khóa',
         'recent_activity' => 'Hoạt động gần đây',
         'sonar_log' => 'Nhật ký sonar của các biến động tài khoản gần nhất.',
+        'fee' => 'Phí',
         'no_activity' => 'Chưa có hoạt động nào. Các giao dịch mới nhất sẽ xuất hiện tại đây.',
         'account_details' => 'Chi tiết tài khoản',
         'feature_verified_only' => 'Tính năng này chỉ khả dụng cho tài khoản đã xác minh.',
@@ -173,6 +184,7 @@ $translations = [
         'locked' => 'Locked',
         'recent_activity' => 'Recent Activity',
         'sonar_log' => 'Sonar log of your latest account movement.',
+        'fee' => 'Fee',
         'no_activity' => 'No activity detected yet. Your latest transactions will appear here.',
         'account_details' => 'Account Details',
         'feature_verified_only' => 'This feature is only available for verified accounts.',
@@ -201,6 +213,16 @@ $translations = [
         'change_password' => 'Change Password',
         'transaction_history' => 'Transaction History',
         'user' => 'User',
+
+        // Bug reports (user-facing)
+        'report_bug'                 => 'Report a bug',
+        'report_bug_intro'           => "Found something broken or confusing? Tell us what you saw and we'll get it fixed.",
+        'bug_title_label'            => 'Short title',
+        'bug_description_label'      => 'What happened?',
+        'bug_description_help'       => 'Be specific. Include steps to reproduce, error messages, and what you saw on screen.',
+        'bug_send_to_dev'            => 'Send to dev team',
+        'bug_thanks'                 => "Thanks! Your report is in the dev queue. We'll look at it as soon as we can.",
+        'bug_report_another'         => 'Report another',
     ],
 ];
 

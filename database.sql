@@ -239,6 +239,29 @@ CREATE TABLE login_history (
 ) ENGINE=InnoDB;
 
 -- =====================================================
+-- BUG REPORTS (user-submitted issues for the dev queue)
+-- =====================================================
+CREATE TABLE bug_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    user_email VARCHAR(255) DEFAULT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    page_url VARCHAR(500) DEFAULT NULL,
+    user_agent VARCHAR(500) DEFAULT NULL,
+    status ENUM('open','triaged','resolved','wont_fix') DEFAULT 'open',
+    dev_notes TEXT DEFAULT NULL,
+    resolved_at DATETIME DEFAULT NULL,
+    resolved_by INT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_bug_status_created (status, created_at),
+    KEY idx_bug_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- INSERT DEFAULT DATA
 -- =====================================================
 

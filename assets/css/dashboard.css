@@ -380,6 +380,24 @@
     color: #ff9f88;
 }
 
+/* Stack the amount + fee in a single grid cell so layout still aligns. */
+.activity-amount-cell {
+    justify-self: end;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.15;
+}
+
+.activity-fee {
+    margin-top: 2px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(214, 237, 242, 0.62);
+    white-space: nowrap;
+}
+
 .activity-empty {
     padding: 1.2rem 1.35rem 0.2rem;
     color: rgba(214, 237, 242, 0.6);

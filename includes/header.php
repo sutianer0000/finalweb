@@ -54,6 +54,7 @@ $flash = getFlash();
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/accounts.php">Accounts</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/pending_transactions.php">Pending Transactions</a></li>
                             <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/notifications.php"><i class="bi bi-megaphone"></i> Notifications</a></li>
+                            <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/bug_reports.php"><i class="bi bi-bug"></i> Bug Reports</a></li>
                             <?php if ($currentUser['role'] === 'superadmin'): ?>
                                 <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/superadmin.php"><i class="bi bi-shield-lock"></i> Super Admin</a></li>
                             <?php endif; ?>
@@ -91,6 +92,13 @@ $flash = getFlash();
                                 <i class="bi bi-person-circle"></i> <?= sanitize($currentUser['full_name']) ?>
                             </span>
                         </li>
+                        <?php if ($currentUser['role'] === 'user'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?= BASE_URL ?>/report_bug.php" title="Report a bug">
+                                    <i class="bi bi-bug"></i> Report Bug
+                                </a>
+                            </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?= BASE_URL ?>/change_password.php"><i class="bi bi-key"></i> Change Password</a>
                         </li>

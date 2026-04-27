@@ -12,7 +12,7 @@ $pageStyles = ['dashboard.css'];
 require_once __DIR__ . '/includes/header.php';
 
 $activityStmt = $db->prepare("
-    SELECT created_at, type, amount, status
+    SELECT created_at, type, amount, fee, total_amount, status, fee_payer
     FROM transactions
     WHERE user_id = ?
     ORDER BY created_at DESC, id DESC
@@ -160,6 +160,13 @@ function dashboardStatusLabel($status) {
                             <?php foreach ($recentActivities as $activity): ?>
                                 <?php
                                 $isNegative = in_array($activity['type'], ['withdraw', 'transfer_out', 'phone_card'], true);
+                                $fee = (float)($activity['fee'] ?? 0);
+                                // Only show fee on transactions where the user actually paid it.
+                                // For transfer_in: receiver only paid the fee if fee_payer = 'receiver'.
+                                $userPaidFee = $fee > 0 && (
+                                    $activity['type'] !== 'transfer_in'
+                                    || ($activity['fee_payer'] ?? null) === 'receiver'
+                                );
                                 ?>
                                 <li class="activity-row">
                                     <span class="activity-time">
@@ -168,8 +175,15 @@ function dashboardStatusLabel($status) {
                                     <span class="activity-type <?= dashboardTypeClass($activity['type']) ?>">
                                         <?= sanitize(dashboardTypeLabel($activity['type'])) ?>
                                     </span>
-                                    <span class="activity-amount <?= $isNegative ? 'is-negative' : 'is-positive' ?>">
-                                        <?= dashboardSignedAmount($activity['type'], $activity['amount']) ?>
+                                    <span class="activity-amount-cell">
+                                        <span class="activity-amount <?= $isNegative ? 'is-negative' : 'is-positive' ?>">
+                                            <?= dashboardSignedAmount($activity['type'], $activity['amount']) ?>
+                                        </span>
+                                        <?php if ($userPaidFee): ?>
+                                            <span class="activity-fee">
+                                                <?= __('fee') ?>: <?= formatMoney($fee) ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </span>
                                 </li>
                             <?php endforeach; ?>

@@ -23,3 +23,7 @@ putenv('SMTP_PASSWORD=your 16-char app password');
 putenv('SMTP_SECURE=tls');
 putenv('MAIL_FROM=youraddress@gmail.com');
 putenv('MAIL_FROM_NAME=E-Wallet');
+
+// --- Bug reports — where the user-submitted report form sends its email.
+//     Falls back to MAIL_FROM if unset, so you can leave this blank for dev.
+putenv('BUG_REPORT_EMAIL=dev-team@yourdomain.com');
