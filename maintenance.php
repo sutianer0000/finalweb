@@ -127,6 +127,24 @@ if (!headers_sent()) {
             z-index: 2;
         }
 
+        .platform::after {
+            content: "";
+            position: absolute;
+            left: 47%;
+            top: 6%;
+            width: 15px;
+            height: 15px;
+            border-radius: 999px;
+            background: #eafff7;
+            box-shadow:
+                0 0 18px var(--green),
+                0 0 46px var(--aqua),
+                0 0 88px rgba(101, 255, 183, 0.38);
+            opacity: 0;
+            animation: muzzle-flash 6.6s ease-in-out infinite;
+            z-index: 4;
+        }
+
         .island {
             position: absolute;
             left: 0;
@@ -213,35 +231,57 @@ if (!headers_sent()) {
 
         .beam {
             position: absolute;
-            left: clamp(160px, 24vw, 360px);
-            top: clamp(104px, 20vh, 210px);
-            width: 62vw;
-            height: 7px;
+            left: clamp(190px, 12.4vw, 230px);
+            top: clamp(505px, 64vh, 590px);
+            width: clamp(900px, 63vw, 1120px);
+            height: 10px;
             border-radius: 999px;
             transform: rotate(-18deg);
             transform-origin: left center;
-            background: linear-gradient(90deg, #f4fffb, var(--green), var(--aqua), transparent);
+            background:
+                linear-gradient(90deg, #ffffff 0%, #dffff6 8%, var(--green) 36%, var(--aqua) 72%, rgba(36, 229, 221, 0.08) 100%);
             box-shadow:
-                0 0 18px var(--green),
-                0 0 52px var(--aqua),
-                0 0 90px rgba(101, 255, 183, 0.48);
+                0 0 18px #ffffff,
+                0 0 38px var(--green),
+                0 0 80px var(--aqua),
+                0 0 120px rgba(101, 255, 183, 0.62);
             opacity: 0;
-            z-index: 1;
+            z-index: 3;
             animation: beam-fire 6.6s ease-in-out infinite;
+        }
+
+        .beam::before,
+        .beam::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+        }
+
+        .beam::after {
+            height: 34px;
+            background: linear-gradient(90deg, rgba(101,255,183,0.22), rgba(36,229,221,0.18), transparent);
+            filter: blur(9px);
+            opacity: 0.78;
         }
 
         .shockwave {
             position: absolute;
-            right: clamp(72px, 20vw, 330px);
-            top: clamp(82px, 16vh, 168px);
-            width: 60px;
-            height: 60px;
+            right: clamp(255px, 18.6vw, 360px);
+            top: clamp(204px, 26vh, 250px);
+            width: 76px;
+            height: 76px;
             border-radius: 999px;
             border: 2px solid rgba(255, 232, 160, 0.88);
             background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(101,255,183,0.4) 28%, transparent 66%);
             box-shadow: 0 0 34px rgba(255, 200, 90, 0.92);
             opacity: 0;
-            z-index: 2;
+            z-index: 4;
             animation: impact 6.6s ease-in-out infinite;
         }
 
@@ -329,10 +369,10 @@ if (!headers_sent()) {
         @keyframes ship-pass {
             0% { transform: translate(0, 0) rotate(-7deg); opacity: 0; }
             14% { opacity: 1; }
-            62% { transform: translate(-54vw, 15vh) rotate(-5deg); opacity: 1; }
-            67% { transform: translate(-56vw, 16vh) rotate(-2deg) scale(1.04); opacity: 1; }
-            76% { transform: translate(-58vw, 17vh) rotate(4deg) scale(0.96); opacity: 0; }
-            100% { transform: translate(-62vw, 20vh) rotate(8deg); opacity: 0; }
+            62% { transform: translate(-31vw, 10vh) rotate(-5deg); opacity: 1; }
+            67% { transform: translate(-33vw, 11vh) rotate(-2deg) scale(1.04); opacity: 1; }
+            76% { transform: translate(-35vw, 12vh) rotate(4deg) scale(0.96); opacity: 0; }
+            100% { transform: translate(-42vw, 15vh) rotate(8deg); opacity: 0; }
         }
 
         @keyframes tower-wake {
@@ -356,14 +396,116 @@ if (!headers_sent()) {
         }
 
         @keyframes beam-fire {
-            0%, 62%, 71%, 100% { opacity: 0; }
-            64%, 67% { opacity: 1; }
+            0%, 60%, 73%, 100% { opacity: 0; transform: rotate(-18deg) scaleX(0.12); }
+            63% { opacity: 0.92; transform: rotate(-18deg) scaleX(1); }
+            66%, 69% { opacity: 1; transform: rotate(-18deg) scaleX(1); }
         }
 
         @keyframes impact {
-            0%, 63%, 100% { opacity: 0; transform: scale(0.15); }
-            67% { opacity: 1; transform: scale(1.2); }
-            78% { opacity: 0; transform: scale(3.1); }
+            0%, 62%, 100% { opacity: 0; transform: scale(0.15); }
+            67% { opacity: 1; transform: scale(1.05); }
+            80% { opacity: 0; transform: scale(3.4); }
+        }
+
+        @keyframes muzzle-flash {
+            0%, 58%, 74%, 100% { opacity: 0; transform: scale(0.2); }
+            63%, 69% { opacity: 1; transform: scale(1.35); }
+        }
+
+        .brand-reveal {
+            position: absolute;
+            right: clamp(58px, 11vw, 180px);
+            top: clamp(78px, 12vh, 140px);
+            width: clamp(170px, 19vw, 260px);
+            padding: 14px 16px;
+            border: 1px solid rgba(101, 255, 183, 0.34);
+            border-radius: 10px;
+            background: rgba(3, 19, 33, 0.72);
+            box-shadow:
+                0 0 28px rgba(36, 229, 221, 0.26),
+                inset 0 0 28px rgba(101, 255, 183, 0.06);
+            z-index: 5;
+            opacity: 0;
+            transform: translateY(10px) scale(0.92);
+            animation: logo-reveal 6.6s ease-in-out infinite;
+        }
+
+        .ewallet-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo-mark {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(101, 255, 183, 0.78);
+            border-radius: 14px;
+            background:
+                linear-gradient(145deg, rgba(36, 229, 221, 0.22), rgba(3, 19, 33, 0.84)),
+                radial-gradient(circle at 68% 28%, rgba(255,255,255,0.72), transparent 18%);
+            box-shadow:
+                0 0 20px rgba(36, 229, 221, 0.48),
+                inset 0 0 18px rgba(101, 255, 183, 0.14);
+        }
+
+        .logo-mark::before {
+            content: "";
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            top: 15px;
+            height: 18px;
+            border: 2px solid rgba(239, 251, 255, 0.88);
+            border-radius: 4px;
+        }
+
+        .logo-mark::after {
+            content: "";
+            position: absolute;
+            right: 8px;
+            top: 21px;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--amber);
+            box-shadow: 0 0 12px var(--amber);
+        }
+
+        .logo-text {
+            text-align: left;
+            line-height: 1;
+        }
+
+        .logo-title {
+            display: block;
+            color: var(--text);
+            font-size: clamp(22px, 2.3vw, 30px);
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .logo-subtitle {
+            display: block;
+            margin-top: 5px;
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        @keyframes logo-reveal {
+            0%, 72%, 100% {
+                opacity: 0;
+                transform: translateY(10px) scale(0.92);
+            }
+            80%, 94% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         @keyframes blink {
@@ -403,6 +545,15 @@ if (!headers_sent()) {
         <div class="ship" aria-hidden="true"></div>
         <div class="beam" aria-hidden="true"></div>
         <div class="shockwave" aria-hidden="true"></div>
+        <div class="brand-reveal" aria-hidden="true">
+            <div class="ewallet-logo">
+                <div class="logo-mark"></div>
+                <div class="logo-text">
+                    <span class="logo-title">E-Wallet</span>
+                    <span class="logo-subtitle">Secure Credits</span>
+                </div>
+            </div>
+        </div>
         <div class="platform" aria-hidden="true">
             <div class="island"></div>
             <div class="tower">
