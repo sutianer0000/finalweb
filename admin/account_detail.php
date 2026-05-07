@@ -232,7 +232,20 @@ require_once __DIR__ . '/../includes/header.php';
                         <dd><?= $account['locked_until'] ? sanitize(date('d/m/Y H:i', strtotime($account['locked_until']))) : 'Not locked' ?></dd>
 
                         <dt>Permanent Lock</dt>
-                        <dd><?= $account['permanently_locked'] ? 'Yes' : 'No' ?></dd>
+                        <dd>
+                            <div class="admin-inline-actions">
+                                <span><?= $account['permanently_locked'] ? 'Yes' : 'No' ?></span>
+                                <?php if ($account['permanently_locked']): ?>
+                                    <form method="POST" class="d-inline" onsubmit="return confirm('Unlock this account and reset abnormal login counters?');">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="action" value="unlock">
+                                        <button type="submit" class="btn btn-sm admin-link-btn is-unlock-btn">
+                                            Unlock
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </dd>
 
                         <dt>Locked At</dt>
                         <dd><?= $account['permanently_locked_at'] ? sanitize(date('d/m/Y H:i', strtotime($account['permanently_locked_at']))) : 'Not locked' ?></dd>
