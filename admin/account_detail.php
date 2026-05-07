@@ -317,29 +317,33 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
                 <div class="admin-panel-body">
                     <div class="admin-actions">
-                        <form method="POST" onsubmit="return confirm('Verify this account?');">
-                            <?= csrfField() ?>
-                            <input type="hidden" name="action" value="verify">
-                            <button type="submit" class="btn admin-action-btn is-verify">
-                                <i class="bi bi-patch-check"></i> Verify
-                            </button>
-                        </form>
+                        <?php if ($account['status'] === 'pending'): ?>
+                            <form method="POST" onsubmit="return confirm('Verify this account?');">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="verify">
+                                <button type="submit" class="btn admin-action-btn is-verify">
+                                    <i class="bi bi-patch-check"></i> Verify
+                                </button>
+                            </form>
 
-                        <form method="POST" onsubmit="return confirm('Request the user to re-upload their ID card?');">
-                            <?= csrfField() ?>
-                            <input type="hidden" name="action" value="request_update">
-                            <button type="submit" class="btn admin-action-btn is-request">
-                                <i class="bi bi-pencil-square"></i> Request Update
-                            </button>
-                        </form>
+                            <form method="POST" onsubmit="return confirm('Request the user to re-upload their ID card?');">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="request_update">
+                                <button type="submit" class="btn admin-action-btn is-request">
+                                    <i class="bi bi-pencil-square"></i> Request Update
+                                </button>
+                            </form>
 
-                        <form method="POST" onsubmit="return confirm('Disable this account? The user will no longer be able to log in.');">
-                            <?= csrfField() ?>
-                            <input type="hidden" name="action" value="cancel">
-                            <button type="submit" class="btn admin-action-btn is-disable">
-                                <i class="bi bi-x-circle"></i> Disable
-                            </button>
-                        </form>
+                            <form method="POST" onsubmit="return confirm('Disable this account? The user will no longer be able to log in.');">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="cancel">
+                                <button type="submit" class="btn admin-action-btn is-disable">
+                                    <i class="bi bi-x-circle"></i> Disable
+                                </button>
+                            </form>
+                        <?php elseif (empty($account['permanently_locked']) && empty($account['status'] === 'disabled')): ?>
+                            <div class="admin-empty">No activation actions available for this account status.</div>
+                        <?php endif; ?>
 
                         <?php if ($account['permanently_locked']): ?>
                             <form method="POST" onsubmit="return confirm('Unlock this account and reset abnormal login counters?');">

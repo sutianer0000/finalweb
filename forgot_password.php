@@ -26,22 +26,28 @@ $info   = null;
 $stage = $_SESSION['forgot']['stage'] ?? 'request';
 
 // ------------------------------------------------------------------
-// STEP 1 — request OTP: user enters email or phone, we email an OTP
+// STEP 1 — request OTP: user enters email AND phone, we email an OTP
 // ------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request') {
     requireCsrfToken();
 
-    $identifier = trim($_POST['identifier'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone_number'] ?? '');
 
-    if ($identifier === '') {
-        $errors[] = 'Please enter your email or phone number.';
-    } else {
-        $stmt = $db->prepare("SELECT id, email, full_name, status FROM users WHERE email = ? OR phone_number = ?");
-        $stmt->execute([$identifier, $identifier]);
+    if ($email === '') {
+        $errors[] = 'Please enter your email address.';
+    }
+    if ($phone === '') {
+        $errors[] = 'Please enter your phone number.';
+    }
+
+    if (empty($errors)) {
+        $stmt = $db->prepare("SELECT id, email, full_name, status FROM users WHERE email = ? AND phone_number = ?");
+        $stmt->execute([$email, $phone]);
         $user = $stmt->fetch();
 
         if (!$user) {
-            $errors[] = 'No account found with that email or phone number.';
+            $errors[] = 'No account found with that email and phone number combination.';
         } elseif ($user['status'] === 'disabled') {
             $errors[] = 'This account has been disabled, please contact the hotline 18001008.';
         } else {
@@ -71,13 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request
                   AND used = 0
             ")->execute([$user['id']]);
 
-            // Generate 6-digit OTP, store in DB with 10-minute expiry.
+            // Generate 6-digit OTP, store in DB with 1-minute expiry.
             // Use MySQL's clock for expires_at so it matches NOW() used in the verify step.
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             $db->prepare("
                 INSERT INTO otp_codes (user_id, otp_code, purpose, expires_at)
-                VALUES (?, ?, 'password_reset', DATE_ADD(NOW(), INTERVAL 10 MINUTE))
+                VALUES (?, ?, 'password_reset', DATE_ADD(NOW(), INTERVAL 1 MINUTE))
             ")->execute([$user['id'], $otp]);
 
             $result = sendPasswordResetOtp($user['email'], $user['full_name'], $otp);
@@ -239,16 +245,22 @@ require_once __DIR__ . '/includes/header.php';
 
             <?php if ($stage === 'request'): ?>
                 <p class="text-muted">
-                    Enter your registered email or phone number. We'll email you a one-time code to reset your password.
+                    Enter your registered email address and phone number. We'll send a one-time code to your email.
                 </p>
                 <form method="POST" novalidate>
                     <?= csrfField() ?>
                     <input type="hidden" name="step" value="request">
                     <div class="mb-3">
-                        <label for="identifier" class="form-label">Email or Phone Number</label>
-                        <input type="text" class="form-control" id="identifier" name="identifier"
-                               value="<?= sanitize($_POST['identifier'] ?? '') ?>"
-                               placeholder="your@email.com or 0123456789" required autofocus>
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               value="<?= sanitize($_POST['email'] ?? '') ?>"
+                               placeholder="your@email.com" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone_number" name="phone_number"
+                               value="<?= sanitize($_POST['phone_number'] ?? '') ?>"
+                               placeholder="0123456789" required>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg">

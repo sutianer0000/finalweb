@@ -91,7 +91,9 @@ if ($query !== '') {
 
 $sql .= $statusFilter === 'permanently_locked'
     ? " ORDER BY permanently_locked_at DESC, created_at DESC"
-    : " ORDER BY created_at DESC";
+    : ($statusFilter === 'pending'
+        ? " ORDER BY updated_at DESC, created_at DESC"
+        : " ORDER BY created_at DESC");
 
 $stmt = $db->prepare($sql);
 $stmt->execute($params);
