@@ -457,6 +457,19 @@ function revokeRememberTokensForUser(int $userId): void {
     $stmt->execute([$userId]);
 }
 
+function unlockUserSecurityLock(int $userId): void {
+    $stmt = getDB()->prepare("
+        UPDATE users
+        SET failed_login_attempts = 0,
+            has_abnormal_login = 0,
+            locked_until = NULL,
+            permanently_locked = 0,
+            permanently_locked_at = NULL
+        WHERE id = ?
+    ");
+    $stmt->execute([$userId]);
+}
+
 function attemptRememberMeLogin(): void {
     if (isLoggedIn()) {
         return;

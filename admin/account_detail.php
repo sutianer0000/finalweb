@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = $_POST['action'] ?? '';
 
-    $stmt = $db->prepare("SELECT id, email, role, status FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, email, role, status, permanently_locked FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $target = $stmt->fetch();
 
@@ -72,15 +72,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'details' => ['old_status' => $target['status'], 'new_status' => 'waiting_for_updates'],
         ]);
         setFlash('success', 'Additional information requested. User can now re-upload their ID card.');
+    } elseif ($action === 'unlock') {
+        if ((int) $target['permanently_locked'] !== 1) {
+            setFlash('warning', 'This account is not currently permanently locked.');
+        } else {
+            unlockUserSecurityLock($userId);
+            revokeRememberTokensForUser($userId);
+            logActivity('admin_unlocked_user', [
+                'target_user_id' => $userId,
+                'target_email' => $target['email'],
+                'entity_type' => 'user',
+                'entity_id' => $userId,
+                'details' => ['source' => 'account_detail'],
+            ]);
+            setFlash('success', 'Account has been unlocked and abnormal login counters were reset.');
+        }
     }
 
     // Any status change above invalidates the dashboard count cache so the
     // next admin page load reflects the new totals immediately.
-    if (in_array($action, ['verify', 'cancel', 'request_update'], true)) {
+    if (in_array($action, ['verify', 'cancel', 'request_update', 'unlock'], true)) {
         forgetCached('admin_dashboard_counts');
     }
 
-    if (!in_array($action, ['verify', 'cancel', 'request_update'], true)) {
+    if (!in_array($action, ['verify', 'cancel', 'request_update', 'unlock'], true)) {
         setFlash('error', 'Unknown action.');
     }
 
@@ -111,6 +126,31 @@ if (!$account) {
     redirect(BASE_URL . '/admin/accounts.php');
 }
 
+$transactionCountStmt = $db->prepare("
+    SELECT COUNT(*)
+    FROM transactions
+    WHERE user_id = ?
+");
+$transactionCountStmt->execute([$userId]);
+$totalTransactionCount = (int) $transactionCountStmt->fetchColumn();
+
+$currentMonthTransactions = [];
+if ($totalTransactionCount > 0) {
+    $transactionStmt = $db->prepare("
+        SELECT t.id, t.transaction_code, t.type, t.amount, t.fee, t.total_amount,
+               t.status, t.note, t.created_at,
+               related.full_name AS related_name
+        FROM transactions t
+        LEFT JOIN users related ON related.id = t.related_user_id
+        WHERE t.user_id = ?
+          AND t.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+          AND t.created_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+        ORDER BY t.created_at DESC, t.id DESC
+    ");
+    $transactionStmt->execute([$userId]);
+    $currentMonthTransactions = $transactionStmt->fetchAll();
+}
+
 $statusLabels = [
     'pending' => ['label' => 'Pending Verification', 'class' => 'is-pending'],
     'verified' => ['label' => 'Verified', 'class' => 'is-verified'],
@@ -130,7 +170,7 @@ require_once __DIR__ . '/../includes/header.php';
             <h3><i class="bi bi-person-vcard"></i> Account Detail</h3>
             <p>Manual review view for identity data, account state, and admin decisions.</p>
         </div>
-        <a href="<?= BASE_URL ?>/admin/accounts.php?status=<?= sanitize($account['status']) ?>" class="btn btn-outline-secondary sn-btn-ghost btn-sm">
+        <a href="<?= BASE_URL ?>/admin/accounts.php?status=<?= sanitize($account['permanently_locked'] ? 'permanently_locked' : $account['status']) ?>" class="btn btn-outline-secondary sn-btn-ghost btn-sm">
             <i class="bi bi-arrow-left"></i> Back to Queue
         </a>
     </div>
@@ -193,6 +233,9 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <dt>Permanent Lock</dt>
                         <dd><?= $account['permanently_locked'] ? 'Yes' : 'No' ?></dd>
+
+                        <dt>Locked At</dt>
+                        <dd><?= $account['permanently_locked_at'] ? sanitize(date('d/m/Y H:i', strtotime($account['permanently_locked_at']))) : 'Not locked' ?></dd>
                     </dl>
                 </div>
                 <?php if (!empty($account['id_card_updated_at'])): ?>
@@ -284,11 +327,79 @@ require_once __DIR__ . '/../includes/header.php';
                                 <i class="bi bi-x-circle"></i> Disable
                             </button>
                         </form>
+
+                        <?php if ($account['permanently_locked']): ?>
+                            <form method="POST" onsubmit="return confirm('Unlock this account and reset abnormal login counters?');">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="unlock">
+                                <button type="submit" class="btn admin-action-btn is-unlock">
+                                    <i class="bi bi-unlock"></i> Unlock Account
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <?php if ($totalTransactionCount > 0): ?>
+        <div class="admin-panel sn-card mt-3">
+            <div class="admin-panel-header">
+                <h5>Current Month Transaction History</h5>
+                <span class="small text-muted"><?= date('F Y') ?></span>
+            </div>
+            <div class="admin-panel-body">
+                <?php if (empty($currentMonthTransactions)): ?>
+                    <div class="admin-empty">
+                        This account has transaction history, but there are no transactions in the current month.
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table admin-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Related</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($currentMonthTransactions as $txn): ?>
+                                    <?php
+                                        $txnStatusClass = match ($txn['status']) {
+                                            'completed', 'approved' => 'is-verified',
+                                            'pending' => 'is-pending',
+                                            'cancelled', 'rejected' => 'is-disabled',
+                                            default => 'is-info',
+                                        };
+                                        $txnTypeLabel = ucwords(str_replace('_', ' ', $txn['type']));
+                                    ?>
+                                    <tr>
+                                        <td class="mono"><?= sanitize(date('d/m/Y H:i', strtotime($txn['created_at']))) ?></td>
+                                        <td class="mono"><?= sanitize($txn['transaction_code']) ?></td>
+                                        <td><?= sanitize($txnTypeLabel) ?></td>
+                                        <td class="mono"><?= formatMoney($txn['total_amount']) ?></td>
+                                        <td>
+                                            <span class="admin-chip <?= $txnStatusClass ?>">
+                                                <?= sanitize(ucwords($txn['status'])) ?>
+                                            </span>
+                                        </td>
+                                        <td><?= $txn['related_name'] ? sanitize($txn['related_name']) : '-' ?></td>
+                                        <td><?= $txn['note'] !== null && $txn['note'] !== '' ? sanitize(mb_strimwidth($txn['note'], 0, 60, '...')) : '-' ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

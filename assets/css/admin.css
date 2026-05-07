@@ -10,6 +10,74 @@
     margin-bottom: 1.25rem;
 }
 
+.admin-dashboard-alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-height: 58px;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(56, 225, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(4, 16, 30, 0.9);
+    color: #d8e8ef;
+    text-decoration: none;
+    transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.admin-dashboard-alert:hover {
+    color: #ffffff;
+    border-color: rgba(56, 225, 255, 0.24);
+    transform: translateY(-1px);
+}
+
+.admin-dashboard-alert__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: rgba(56, 225, 255, 0.08);
+    color: #8befff;
+    font-size: 1.05rem;
+}
+
+.admin-dashboard-alert__body {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.admin-dashboard-alert__body strong {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.admin-dashboard-alert__body span:last-child {
+    font-size: 0.83rem;
+    color: rgba(216, 232, 239, 0.82);
+}
+
+.admin-dashboard-alert.has-alert {
+    border-color: rgba(255, 92, 92, 0.48);
+    box-shadow: 0 0 0 1px rgba(255, 92, 92, 0.12), 0 0 18px rgba(255, 92, 92, 0.12);
+}
+
+.admin-dashboard-alert.has-alert .admin-dashboard-alert__icon {
+    background: rgba(255, 92, 92, 0.14);
+    color: #ff8686;
+    animation: admin-alert-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes admin-alert-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 92, 92, 0.00);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 92, 92, 0.00), 0 0 16px rgba(255, 92, 92, 0.18);
+    }
+}
+
 .admin-heading h3 {
     margin: 0;
     font-size: 1.45rem;
@@ -48,7 +116,7 @@
 
 .admin-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.9rem;
     margin-bottom: 1rem;
 }
@@ -391,6 +459,12 @@
     border-color: #c14a30;
 }
 
+.admin-action-btn.is-unlock {
+    color: #ffffff;
+    background: #5189aa;
+    border-color: #5189aa;
+}
+
 .admin-action-btn:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
@@ -440,6 +514,23 @@
     color: rgba(255, 255, 255, 0.75);
 }
 
+.admin-inline-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.is-unlock-btn {
+    background: #5189aa;
+    border-color: #5189aa;
+}
+
+.is-unlock-btn:hover {
+    background: #649fbe;
+    border-color: #649fbe;
+}
+
 @media (max-width: 991.98px) {
     .admin-stat-grid,
     .admin-toolbar-grid,
@@ -447,6 +538,11 @@
     .scanner-grid,
     .superadmin-access-form {
         grid-template-columns: 1fr;
+    }
+
+    .admin-heading {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .admin-toolbar {

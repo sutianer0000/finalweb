@@ -7,6 +7,7 @@ $user = getCurrentUser();
 $db = getDB();
 $errors = [];
 $receipt = null;
+$cardValidationFailed = false;
 
 const WITHDRAW_CARD_NUMBER = '111111';
 const WITHDRAW_CARD_EXPIRATION = '10/10/2022';
@@ -71,12 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($cardNumber === '' || $expirationDate === '' || $cvv === '') {
         $errors[] = 'Invalid card information';
+        $cardValidationFailed = true;
     } elseif (!preg_match('/^\d{6}$/', $cardNumber)) {
         $errors[] = 'Invalid card information';
+        $cardValidationFailed = true;
     } elseif ($cardNumber !== WITHDRAW_CARD_NUMBER) {
         $errors[] = 'This card is not supported for withdrawal';
+        $cardValidationFailed = true;
     } elseif ($expirationDate !== WITHDRAW_CARD_EXPIRATION || $cvv !== WITHDRAW_CARD_CVV) {
         $errors[] = 'Invalid card information';
+        $cardValidationFailed = true;
     }
 
     if ($amount === null) {
@@ -186,6 +191,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = $e instanceof RuntimeException ? $e->getMessage() : 'Withdrawal could not be completed. Please try again.';
         }
     }
+
+    if ($cardValidationFailed) {
+        $cardNumber = '';
+        $expirationDate = '';
+        $cvv = '';
+    }
 }
 
 $recentStmt = $db->prepare("
@@ -275,7 +286,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
         <?php endif; ?>
 
-        <?php if (!$receipt && !(($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !empty($errors))): ?>
+        <?php if (!$receipt): ?>
         <div class="row g-4 align-items-stretch">
             <div class="col-lg-7">
                 <div class="hud-card sn-card">
