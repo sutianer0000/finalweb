@@ -226,11 +226,33 @@ $translations = [
     ],
 ];
 
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['vi', 'en'], true)) {
-    $_SESSION['lang'] = $_GET['lang'];
+$supportedLanguages = ['vi', 'en'];
+$languageCookieName = 'app_lang';
+
+if (isset($_GET['lang']) && in_array($_GET['lang'], $supportedLanguages, true)) {
+    $selectedLanguage = $_GET['lang'];
+    $_SESSION['lang'] = $selectedLanguage;
+    $_COOKIE[$languageCookieName] = $selectedLanguage;
+
+    if (function_exists('setAppCookie')) {
+        setAppCookie($languageCookieName, $selectedLanguage, time() + 31536000);
+    } else {
+        setcookie($languageCookieName, $selectedLanguage, [
+            'expires' => time() + 31536000,
+            'path' => '/',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'),
+            'httponly' => false,
+            'samesite' => 'Lax',
+        ]);
+    }
 }
 
-$lang = $_SESSION['lang'] ?? 'vi';
+if (!isset($_SESSION['lang']) && isset($_COOKIE[$languageCookieName]) && in_array($_COOKIE[$languageCookieName], $supportedLanguages, true)) {
+    $_SESSION['lang'] = $_COOKIE[$languageCookieName];
+}
+
+$lang = $_SESSION['lang'] ?? 'en';
 
 function __($key) {
     global $translations, $lang;
