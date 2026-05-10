@@ -2,6 +2,10 @@
     color: #d8e8ef;
 }
 
+.admin-shell .muted {
+    color: rgba(216, 232, 239, 0.82);
+}
+
 .admin-heading {
     display: flex;
     justify-content: space-between;
