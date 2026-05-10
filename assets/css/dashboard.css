@@ -412,6 +412,44 @@
     color: rgba(214, 237, 242, 0.6);
 }
 
+.activity-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-start;
+}
+
+.activity-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.42rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.activity-status.is-completed,
+.activity-status.is-approved {
+    background: rgba(93, 227, 151, 0.12);
+    border: 1px solid rgba(93, 227, 151, 0.22);
+    color: #8ef0b8;
+}
+
+.activity-status.is-pending {
+    background: rgba(255, 197, 80, 0.12);
+    border: 1px solid rgba(255, 197, 80, 0.22);
+    color: #ffd97a;
+}
+
+.activity-status.is-rejected {
+    background: rgba(255, 122, 89, 0.12);
+    border: 1px solid rgba(255, 122, 89, 0.22);
+    color: #ffb09a;
+}
+
 .dashboard-alert {
     border-radius: 18px;
     border: 1px solid rgba(56, 225, 255, 0.14);

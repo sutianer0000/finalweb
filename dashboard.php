@@ -68,6 +68,15 @@ function dashboardStatusLabel($status) {
 
     return $labels[$status] ?? ucwords(str_replace('_', ' ', $status));
 }
+
+function dashboardTxStatusClass($status) {
+    return match ($status) {
+        'completed', 'approved' => 'is-completed',
+        'pending'               => 'is-pending',
+        'rejected', 'cancelled' => 'is-rejected',
+        default                 => '',
+    };
+}
 ?>
 
 
@@ -172,9 +181,14 @@ function dashboardStatusLabel($status) {
                                     <span class="activity-time">
                                         <?= date('H:i', strtotime($activity['created_at'])) ?>
                                     </span>
-                                    <span class="activity-type <?= dashboardTypeClass($activity['type']) ?>">
-                                        <?= sanitize(dashboardTypeLabel($activity['type'])) ?>
-                                    </span>
+                                    <div class="activity-meta">
+                                        <span class="activity-type <?= dashboardTypeClass($activity['type']) ?>">
+                                            <?= sanitize(dashboardTypeLabel($activity['type'])) ?>
+                                        </span>
+                                        <span class="activity-status <?= dashboardTxStatusClass($activity['status']) ?>">
+                                            <?= sanitize(ucwords(str_replace('_', ' ', $activity['status']))) ?>
+                                        </span>
+                                    </div>
                                     <div class="activity-amount-cell">
                                         <span class="activity-amount <?= $isNegative ? 'is-negative' : 'is-positive' ?>">
                                             <?= dashboardSignedAmount($activity['type'], $activity['amount']) ?>
