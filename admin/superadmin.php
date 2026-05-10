@@ -119,7 +119,7 @@ $stmt->execute($logParams);
 $activityLogs = $stmt->fetchAll();
 
 function formatSuperadminTime($value) {
-    return $value ? date('Y-m-d H:i:s', strtotime($value)) : null;
+    return $value ? date('d/m/Y H:i:s', strtotime($value)) : null;
 }
 
 function compactActivityDetails($json) {
@@ -218,7 +218,10 @@ require_once __DIR__ . '/../includes/header.php';
                         </thead>
                         <tbody>
                             <?php foreach ($accounts as $account): ?>
-                                <?php $lastSeenIso = formatSuperadminTime($account['last_seen_at']); ?>
+                                <?php
+                                    $lastSeenEpoch = $account['last_seen_at'] ? strtotime($account['last_seen_at']) : null;
+                                    $lastSeenDisplay = formatSuperadminTime($account['last_seen_at']);
+                                ?>
                                 <tr>
                                     <td>
                                         <div class="fw-semibold"><?= sanitize($account['full_name']) ?></div>
@@ -228,9 +231,11 @@ require_once __DIR__ . '/../includes/header.php';
                                     <td><span class="admin-chip is-info"><?= sanitize($roleOptions[$account['role']] ?? $account['role']) ?></span></td>
                                     <td><span class="admin-chip <?= $account['status'] === 'verified' ? 'is-verified' : ($account['status'] === 'disabled' ? 'is-disabled' : ($account['status'] === 'waiting_for_updates' ? 'is-waiting' : 'is-pending')) ?>"><?= sanitize($statusOptions[$account['status']] ?? $account['status']) ?></span></td>
                                     <td class="mono small">
-                                        <?php if ($lastSeenIso): ?>
-                                            <span class="last-seen-rel" data-ts="<?= $lastSeenIso ?>">
-                                                <?= sanitize($lastSeenIso) ?>
+                                        <?php if ($lastSeenEpoch): ?>
+                                            <span class="last-seen-rel"
+                                                  data-epoch="<?= $lastSeenEpoch ?>"
+                                                  title="<?= sanitize($lastSeenDisplay) ?>">
+                                                <?= sanitize($lastSeenDisplay) ?>
                                             </span>
                                         <?php else: ?>
                                             <span class="muted">Never</span>
@@ -317,61 +322,75 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
-// Relative time for last activity
-function relativeTime(isoStr) {
-    const d = new Date(isoStr.replace(' ', 'T'));
-    const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (diffSec < 60)  return 'Just now';
-    if (diffSec < 3600) {
-        const m = Math.floor(diffSec / 60);
-        return m + ' min' + (m > 1 ? 's' : '') + ' ago';
+// Wait for Bootstrap JS (loaded in footer.php) to be available before running.
+document.addEventListener('DOMContentLoaded', function () {
+    const SERVER_EPOCH = <?= time() ?>;
+    const PAGE_LOAD_CLIENT_MS = Date.now();
+
+    function relativeFromEpoch(epoch) {
+        const elapsedSinceLoad = Math.floor((Date.now() - PAGE_LOAD_CLIENT_MS) / 1000);
+        const diffSec = (SERVER_EPOCH - epoch) + elapsedSinceLoad;
+        if (diffSec < 60)   return 'Just now';
+        if (diffSec < 3600) { const m = Math.floor(diffSec / 60);    return m + ' min'  + (m > 1 ? 's' : '') + ' ago'; }
+        if (diffSec < 86400){ const h = Math.floor(diffSec / 3600);  return h + ' hour' + (h > 1 ? 's' : '') + ' ago'; }
+        const days = Math.floor(diffSec / 86400);
+        return days + ' day' + (days > 1 ? 's' : '') + ' ago';
     }
-    if (diffSec < 86400) {
-        const h = Math.floor(diffSec / 3600);
-        return h + ' hour' + (h > 1 ? 's' : '') + ' ago';
+
+    function refreshRelativeTimes() {
+        document.querySelectorAll('.last-seen-rel').forEach(el => {
+            const epoch = parseInt(el.dataset.epoch, 10);
+            if (!isNaN(epoch)) el.textContent = relativeFromEpoch(epoch);
+        });
     }
-    const days = Math.floor(diffSec / 86400);
-    return days + ' day' + (days > 1 ? 's' : '') + ' ago';
-}
+    refreshRelativeTimes();
+    setInterval(refreshRelativeTimes, 30000);
 
-document.querySelectorAll('.last-seen-rel').forEach(el => {
-    const ts = el.dataset.ts;
-    if (ts) el.textContent = relativeTime(ts);
-});
-
-// Danger modal + password injection
-let pendingForm = null;
-const dangerModal = new bootstrap.Modal(document.getElementById('dangerModal'));
-const modalPwInput = document.getElementById('modalPassword');
-
-document.querySelectorAll('.superadmin-access-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        pendingForm = this;
-        modalPwInput.value = '';
-        modalPwInput.classList.remove('is-invalid');
-        dangerModal.show();
-    });
-});
-
-document.getElementById('dangerModal').addEventListener('shown.bs.modal', () => {
-    modalPwInput.focus();
-});
-
-document.getElementById('dangerConfirmBtn').addEventListener('click', function() {
-    if (!pendingForm) return;
-    const pw = modalPwInput.value.trim();
-    if (!pw) {
-        modalPwInput.classList.add('is-invalid');
+    // Danger modal + password injection
+    if (typeof bootstrap === 'undefined') {
+        console.error('[superadmin] Bootstrap JS not loaded');
         return;
     }
-    pendingForm.querySelector('.confirm-password-field').value = pw;
-    dangerModal.hide();
-    pendingForm.submit();
-});
 
-modalPwInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('dangerConfirmBtn').click();
+    let pendingForm = null;
+    const dangerModalEl = document.getElementById('dangerModal');
+    const dangerModal = new bootstrap.Modal(dangerModalEl);
+    const modalPwInput = document.getElementById('modalPassword');
+
+    document.querySelectorAll('.superadmin-access-form').forEach(form => {
+        form.setAttribute('data-no-submit-lock', '1');
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.confirmed === '1') return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            pendingForm = this;
+            modalPwInput.value = '';
+            modalPwInput.classList.remove('is-invalid');
+            dangerModal.show();
+        });
+    });
+
+    dangerModalEl.addEventListener('shown.bs.modal', () => modalPwInput.focus());
+
+    document.getElementById('dangerConfirmBtn').addEventListener('click', function () {
+        if (!pendingForm) return;
+        const pw = modalPwInput.value;
+        if (!pw) {
+            modalPwInput.classList.add('is-invalid');
+            return;
+        }
+        pendingForm.querySelector('.confirm-password-field').value = pw;
+        pendingForm.dataset.confirmed = '1';
+        dangerModal.hide();
+        pendingForm.submit();
+    });
+
+    modalPwInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('dangerConfirmBtn').click();
+        }
+    });
 });
 </script>
 
