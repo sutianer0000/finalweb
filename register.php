@@ -18,6 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $db = getDB();
 
+    if (!checkAndRecordRateLimit('register', 5, 10)) {
+        $errors[] = 'Too many registration attempts from this network. Please try again in 10 minutes.';
+    }
+
     // Collect and sanitize inputs
     $phone = trim($_POST['phone_number'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -26,11 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = trim($_POST['address'] ?? '');
 
     // --- Validation ---
-    // Phone number
+    // Phone number — Vietnamese format: 10 digits starting with 0
     if (empty($phone)) {
         $errors[] = 'Phone number is required.';
-    } elseif (!preg_match('/^[0-9]{9,15}$/', $phone)) {
-        $errors[] = 'Phone number must be 9-15 digits.';
+    } elseif (!preg_match('/^0[0-9]{9}$/', $phone)) {
+        $errors[] = 'Phone number must be 10 digits starting with 0 (e.g. 0901234567).';
     } else {
         $stmt = $db->prepare("SELECT id FROM users WHERE phone_number = ?");
         $stmt->execute([$phone]);
@@ -57,9 +61,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Full name is required.';
     }
 
-    // Date of birth
+    // Date of birth — must be a valid date with reasonable age
     if (empty($dob)) {
         $errors[] = 'Date of birth is required.';
+    } else {
+        $parts = date_parse($dob);
+        $isValidDate = $parts['error_count'] === 0
+            && $parts['warning_count'] === 0
+            && checkdate((int) $parts['month'], (int) $parts['day'], (int) $parts['year']);
+
+        if (!$isValidDate) {
+            $errors[] = 'Please enter a valid date of birth.';
+        } else {
+            $dobTs = strtotime($dob);
+            $now = time();
+            if ($dobTs > $now) {
+                $errors[] = 'Date of birth cannot be in the future.';
+            } elseif ($dobTs > strtotime('-13 years')) {
+                $errors[] = 'You must be at least 13 years old to register.';
+            } elseif ($dobTs < strtotime('-120 years')) {
+                $errors[] = 'Please enter a valid date of birth.';
+            }
+        }
     }
 
     // Address

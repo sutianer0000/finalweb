@@ -31,6 +31,10 @@ $stage = $_SESSION['forgot']['stage'] ?? 'request';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'request') {
     requireCsrfToken();
 
+    if (!checkAndRecordRateLimit('forgot_password', 5, 10)) {
+        $errors[] = 'Too many password reset attempts from this network. Please try again in 10 minutes.';
+    }
+
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone_number'] ?? '');
 

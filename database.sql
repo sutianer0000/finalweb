@@ -288,6 +288,19 @@ INSERT INTO credit_cards (card_number, expiration_date, cvv, card_type, max_amou
 ('333333', '12/12/2022', '577', 'deposit', NULL, 1, 'Always returns "card is out of money".');
 
 -- =====================================================
+-- RATE LIMITS TABLE (per-IP throttling for register / forgot-password)
+-- Auto-created by includes/auth.php on first use; included here so fresh
+-- imports already have it.
+-- =====================================================
+CREATE TABLE rate_limits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_rate_limits_lookup (ip_address, action, created_at)
+) ENGINE=InnoDB;
+
+-- =====================================================
 -- INDEXES FOR PERFORMANCE
 -- =====================================================
 CREATE INDEX idx_users_status ON users(status);

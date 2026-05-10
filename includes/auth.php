@@ -655,6 +655,67 @@ function sanitize($input) {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }
 
+function getClientIp(): string {
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($forwarded !== '') {
+        $first = trim(explode(',', $forwarded)[0]);
+        if ($first !== '') return $first;
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '';
+}
+
+function ensureRateLimitTable(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        getDB()->exec("
+            CREATE TABLE IF NOT EXISTS rate_limits (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ip_address VARCHAR(45) NOT NULL,
+                action VARCHAR(50) NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_rate_limits_lookup (ip_address, action, created_at)
+            ) ENGINE=InnoDB
+        ");
+    } catch (Throwable $e) {
+        error_log('[rate_limit] table create failed: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Returns true if the request is allowed (under limit) and records the attempt.
+ * Returns false if rate-limited (does NOT record — the cap stays at maxAttempts).
+ */
+function checkAndRecordRateLimit(string $action, int $maxAttempts, int $windowMinutes): bool {
+    ensureRateLimitTable();
+    $db = getDB();
+    $ip = getClientIp();
+    if ($ip === '') return true;
+
+    try {
+        $stmt = $db->prepare("
+            SELECT COUNT(*) FROM rate_limits
+            WHERE ip_address = ? AND action = ?
+              AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+        ");
+        $stmt->execute([$ip, $action, $windowMinutes]);
+        $count = (int) $stmt->fetchColumn();
+        if ($count >= $maxAttempts) return false;
+
+        $db->prepare("INSERT INTO rate_limits (ip_address, action) VALUES (?, ?)")
+           ->execute([$ip, $action]);
+
+        if ($count === 0 && random_int(1, 100) === 1) {
+            $db->exec("DELETE FROM rate_limits WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
+        }
+        return true;
+    } catch (Throwable $e) {
+        error_log('[rate_limit] check failed: ' . $e->getMessage());
+        return true;
+    }
+}
+
 function logActivity(string $action, array $options = []): void {
     try {
         ensureActivityLogTable();
