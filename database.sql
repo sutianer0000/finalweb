@@ -41,6 +41,7 @@ CREATE TABLE users (
     permanently_locked TINYINT(1) DEFAULT 0,
     permanently_locked_at DATETIME DEFAULT NULL,
     -- Timestamps
+    last_seen_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

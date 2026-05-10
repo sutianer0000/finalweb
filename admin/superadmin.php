@@ -88,15 +88,8 @@ if ($query !== '') {
 
 $stmt = $db->prepare("
     SELECT u.id, u.full_name, u.email, u.phone_number, u.role, u.status, u.first_login, u.created_at, u.updated_at,
-           session_summary.last_seen_at
+           u.last_seen_at
     FROM users u
-    LEFT JOIN (
-        SELECT user_id,
-               MAX(last_seen_at) AS last_seen_at
-        FROM app_sessions
-        WHERE user_id IS NOT NULL
-        GROUP BY user_id
-    ) session_summary ON session_summary.user_id = u.id
     WHERE {$accountWhere}
     ORDER BY FIELD(u.role, 'superadmin', 'admin', 'user'), u.created_at DESC
     LIMIT 200

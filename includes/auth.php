@@ -81,7 +81,16 @@ class DatabaseSessionHandler implements SessionHandlerInterface
                     last_seen_at = VALUES(last_seen_at),
                     updated_at = NOW()
             ");
-            return $stmt->execute([$id, $data, $userId, $expiresAt, $userId]);
+            $ok = $stmt->execute([$id, $data, $userId, $expiresAt, $userId]);
+            if ($userId !== null) {
+                try {
+                    getDB()->prepare("UPDATE users SET last_seen_at = NOW() WHERE id = ?")
+                           ->execute([$userId]);
+                } catch (Throwable $e) {
+                    error_log('[session] users.last_seen_at update failed: ' . $e->getMessage());
+                }
+            }
+            return $ok;
         } catch (Throwable $e) {
             error_log('[session] write failed: ' . $e->getMessage());
             return false;
@@ -135,6 +144,19 @@ class DatabaseSessionHandler implements SessionHandlerInterface
         $this->addColumnIfMissing('last_seen_at', 'ALTER TABLE app_sessions ADD COLUMN last_seen_at DATETIME DEFAULT NULL AFTER expires_at');
         $this->addIndexIfMissing('idx_app_sessions_user', 'ALTER TABLE app_sessions ADD INDEX idx_app_sessions_user (user_id)');
         $this->addIndexIfMissing('idx_app_sessions_last_seen', 'ALTER TABLE app_sessions ADD INDEX idx_app_sessions_last_seen (last_seen_at)');
+
+        // Auto-migrate: add last_seen_at to users table if not present yet
+        $stmt = getDB()->prepare("
+            SELECT 1 FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'users'
+              AND COLUMN_NAME = 'last_seen_at'
+            LIMIT 1
+        ");
+        $stmt->execute();
+        if ($stmt->fetchColumn() === false) {
+            getDB()->exec("ALTER TABLE users ADD COLUMN last_seen_at DATETIME DEFAULT NULL");
+        }
 
         $this->tableChecked = true;
     }
